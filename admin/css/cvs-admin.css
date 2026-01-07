@@ -324,6 +324,121 @@
     color: #721c24;
 }
 
+/* Holiday Exclusion Periods */
+.cvs-holiday-periods {
+    max-width: 1000px;
+}
+
+.cvs-exclusion-periods-table {
+    margin-top: 15px;
+}
+
+.cvs-exclusion-periods-table .no-items td {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+}
+
+.cvs-exclusion-periods-table tr.cvs-period-active {
+    background-color: #fff8e5;
+}
+
+.cvs-recurring-badge,
+.cvs-one-time-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.cvs-recurring-badge {
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+.cvs-one-time-badge {
+    background: #f3f4f6;
+    color: #6b7280;
+}
+
+.cvs-status-active {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 500;
+    background: #fef3cd;
+    color: #856404;
+}
+
+.cvs-status-inactive {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 500;
+    background: #e9ecef;
+    color: #6c757d;
+}
+
+.cvs-exclusion-period-form {
+    margin-top: 15px;
+    padding: 20px;
+    background: #f6f7f7;
+    border: 1px solid #dcdcde;
+}
+
+.cvs-exclusion-period-form .form-table th {
+    width: 150px;
+    padding: 10px 10px 10px 0;
+}
+
+.cvs-exclusion-period-form .form-table td {
+    padding: 10px 0;
+}
+
+.cvs-exclusion-info {
+    margin-top: 30px;
+    padding: 15px 20px;
+    background: #f0f6fc;
+    border: 1px solid #c3c4c7;
+    border-left: 4px solid #2271b1;
+}
+
+.cvs-exclusion-info h4 {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.cvs-exclusion-info ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.cvs-exclusion-info li {
+    margin-bottom: 5px;
+}
+
+/* Calendar exclusion period styling */
+.cvs-calendar-day.excluded {
+    background: #fef3cd;
+}
+
+.cvs-calendar-day.excluded.blackout {
+    background: linear-gradient(135deg, #f8d7da 50%, #fef3cd 50%);
+}
+
+.cvs-exclusion-label {
+    font-size: 11px;
+    color: #856404;
+    display: block;
+}
+
+.legend-dot.excluded {
+    background: #fef3cd;
+}
+
 /* Reports */
 .cvs-report-filters {
     margin: 20px 0;

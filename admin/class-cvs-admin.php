@@ -37,6 +37,9 @@ class CVS_Admin {
         add_action( 'wp_ajax_cvs_resend_confirmation', array( $this, 'ajax_resend_confirmation' ) );
         add_action( 'wp_ajax_cvs_save_admin_notes', array( $this, 'ajax_save_admin_notes' ) );
         add_action( 'wp_ajax_cvs_export_bookings', array( $this, 'ajax_export_bookings' ) );
+        add_action( 'wp_ajax_cvs_add_exclusion_period', array( $this, 'ajax_add_exclusion_period' ) );
+        add_action( 'wp_ajax_cvs_update_exclusion_period', array( $this, 'ajax_update_exclusion_period' ) );
+        add_action( 'wp_ajax_cvs_delete_exclusion_period', array( $this, 'ajax_delete_exclusion_period' ) );
     }
 
     /**
@@ -540,5 +543,91 @@ class CVS_Admin {
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
         return $wpdb->get_results( "SELECT * FROM $table ORDER BY blackout_date ASC", ARRAY_A );
+    }
+
+    /**
+     * AJAX: Add exclusion period
+     */
+    public function ajax_add_exclusion_period() {
+        check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
+        }
+
+        $data = array(
+            'period_name'      => isset( $_POST['period_name'] ) ? $_POST['period_name'] : '',
+            'start_date'       => isset( $_POST['start_date'] ) ? $_POST['start_date'] : '',
+            'end_date'         => isset( $_POST['end_date'] ) ? $_POST['end_date'] : '',
+            'recurring_yearly' => isset( $_POST['recurring_yearly'] ) && '1' === $_POST['recurring_yearly'],
+        );
+
+        $result = CVS_Helpers::add_exclusion_period( $data );
+
+        if ( is_wp_error( $result ) ) {
+            wp_send_json_error( $result->get_error_message() );
+        }
+
+        wp_send_json_success( array(
+            'id'      => $result,
+            'message' => __( 'Holiday period added successfully.', 'campus-visit-scheduler' ),
+        ) );
+    }
+
+    /**
+     * AJAX: Update exclusion period
+     */
+    public function ajax_update_exclusion_period() {
+        check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
+        }
+
+        $id = isset( $_POST['id'] ) ? absint( $_POST['id'] ) : 0;
+
+        if ( ! $id ) {
+            wp_send_json_error( __( 'Invalid period ID.', 'campus-visit-scheduler' ) );
+        }
+
+        $data = array(
+            'period_name'      => isset( $_POST['period_name'] ) ? $_POST['period_name'] : '',
+            'start_date'       => isset( $_POST['start_date'] ) ? $_POST['start_date'] : '',
+            'end_date'         => isset( $_POST['end_date'] ) ? $_POST['end_date'] : '',
+            'recurring_yearly' => isset( $_POST['recurring_yearly'] ) && '1' === $_POST['recurring_yearly'],
+        );
+
+        $result = CVS_Helpers::update_exclusion_period( $id, $data );
+
+        if ( is_wp_error( $result ) ) {
+            wp_send_json_error( $result->get_error_message() );
+        }
+
+        wp_send_json_success( __( 'Holiday period updated successfully.', 'campus-visit-scheduler' ) );
+    }
+
+    /**
+     * AJAX: Delete exclusion period
+     */
+    public function ajax_delete_exclusion_period() {
+        check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
+        }
+
+        $id = isset( $_POST['id'] ) ? absint( $_POST['id'] ) : 0;
+
+        if ( ! $id ) {
+            wp_send_json_error( __( 'Invalid period ID.', 'campus-visit-scheduler' ) );
+        }
+
+        $result = CVS_Helpers::delete_exclusion_period( $id );
+
+        if ( $result ) {
+            wp_send_json_success( __( 'Holiday period deleted.', 'campus-visit-scheduler' ) );
+        } else {
+            wp_send_json_error( __( 'Failed to delete holiday period.', 'campus-visit-scheduler' ) );
+        }
     }
 }

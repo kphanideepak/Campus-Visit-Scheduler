@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin version
-define( 'CVS_VERSION', '1.0.0' );
+define( 'CVS_VERSION', '1.1.0' );
 
 // Plugin directory path
 define( 'CVS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
@@ -75,3 +75,16 @@ if ( is_admin() ) {
 // Load public functionality
 require_once CVS_PLUGIN_DIR . 'public/class-cvs-public.php';
 new CVS_Public();
+
+/**
+ * Check for database updates on plugin load
+ */
+function cvs_check_db_updates() {
+    $current_db_version = get_option( 'cvs_db_version', '1.0.0' );
+
+    if ( version_compare( $current_db_version, CVS_VERSION, '<' ) ) {
+        require_once CVS_PLUGIN_DIR . 'includes/class-cvs-activator.php';
+        CVS_Activator::activate();
+    }
+}
+add_action( 'plugins_loaded', 'cvs_check_db_updates', 5 );

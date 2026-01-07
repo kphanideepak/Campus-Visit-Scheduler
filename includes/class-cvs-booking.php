@@ -65,8 +65,8 @@ class CVS_Booking {
             $date_str = $current_date->format( 'Y-m-d' );
             $day_of_week = (int) $current_date->format( 'w' );
 
-            // Skip blackout dates
-            if ( CVS_Helpers::is_blackout_date( $date_str ) ) {
+            // Skip blackout dates and exclusion periods
+            if ( CVS_Helpers::is_blackout_date( $date_str ) || CVS_Helpers::is_excluded_date( $date_str ) ) {
                 $current_date->modify( '+1 day' );
                 continue;
             }
@@ -108,8 +108,8 @@ class CVS_Booking {
                 continue;
             }
 
-            // Skip blackout dates
-            if ( CVS_Helpers::is_blackout_date( $date_str ) ) {
+            // Skip blackout dates and exclusion periods
+            if ( CVS_Helpers::is_blackout_date( $date_str ) || CVS_Helpers::is_excluded_date( $date_str ) ) {
                 continue;
             }
 
@@ -206,6 +206,16 @@ class CVS_Booking {
         // Check blackout date
         if ( CVS_Helpers::is_blackout_date( $date ) ) {
             return __( 'Tours are not available on this date.', 'campus-visit-scheduler' );
+        }
+
+        // Check exclusion periods
+        $exclusion = CVS_Helpers::is_excluded_date( $date );
+        if ( $exclusion ) {
+            return sprintf(
+                /* translators: %s: holiday period name */
+                __( 'This date falls within %s and is not available for bookings.', 'campus-visit-scheduler' ),
+                $exclusion['period_name']
+            );
         }
 
         // Get schedule for this slot

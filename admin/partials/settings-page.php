@@ -16,6 +16,7 @@ $tabs = array(
     'general'       => __( 'General', 'campus-visit-scheduler' ),
     'tour_schedule' => __( 'Tour Schedule', 'campus-visit-scheduler' ),
     'blackout'      => __( 'Blackout Dates', 'campus-visit-scheduler' ),
+    'holidays'      => __( 'Holiday Periods', 'campus-visit-scheduler' ),
     'notifications' => __( 'Notifications', 'campus-visit-scheduler' ),
     'emails'        => __( 'Email Templates', 'campus-visit-scheduler' ),
 );
@@ -41,6 +42,9 @@ $tabs = array(
                 break;
             case 'blackout':
                 include 'settings-blackout.php';
+                break;
+            case 'holidays':
+                include 'settings-holidays.php';
                 break;
             case 'notifications':
                 include 'settings-notifications.php';

@@ -90,6 +90,15 @@ $blackout_dates_raw = $wpdb->get_col(
 );
 $blackout_dates = array_flip( $blackout_dates_raw );
 
+// Pre-calculate excluded dates for this month
+$excluded_dates = array();
+for ( $d = 1; $d <= $days_in_month; $d++ ) {
+    $check_date = sprintf( '%04d-%02d-%02d', $current_year, $current_month, $d );
+    if ( CVS_Helpers::is_excluded_date( $check_date ) ) {
+        $excluded_dates[ $check_date ] = true;
+    }
+}
+
 $today = gmdate( 'Y-m-d' );
 ?>
 
@@ -109,6 +118,7 @@ $today = gmdate( 'Y-m-d' );
     <div class="cvs-calendar-legend">
         <span class="legend-item"><span class="legend-dot confirmed"></span> <?php esc_html_e( 'Confirmed', 'campus-visit-scheduler' ); ?></span>
         <span class="legend-item"><span class="legend-dot blackout"></span> <?php esc_html_e( 'Blackout', 'campus-visit-scheduler' ); ?></span>
+        <span class="legend-item"><span class="legend-dot excluded"></span> <?php esc_html_e( 'Holiday Period', 'campus-visit-scheduler' ); ?></span>
         <span class="legend-item"><span class="legend-dot today"></span> <?php esc_html_e( 'Today', 'campus-visit-scheduler' ); ?></span>
     </div>
 
@@ -142,6 +152,7 @@ $today = gmdate( 'Y-m-d' );
                             $date_str = sprintf( '%04d-%02d-%02d', $current_year, $current_month, $day );
                             $is_today = ( $date_str === $today );
                             $is_blackout = isset( $blackout_dates[ $date_str ] );
+                            $is_excluded = isset( $excluded_dates[ $date_str ] );
                             $has_bookings = isset( $bookings_by_date[ $date_str ] );
                             $confirmed_count = $has_bookings ? $bookings_by_date[ $date_str ]['confirmed'] : 0;
 
@@ -151,6 +162,9 @@ $today = gmdate( 'Y-m-d' );
                             }
                             if ( $is_blackout ) {
                                 $classes[] = 'blackout';
+                            }
+                            if ( $is_excluded ) {
+                                $classes[] = 'excluded';
                             }
                             if ( $confirmed_count > 0 ) {
                                 $classes[] = 'has-bookings';
@@ -170,6 +184,8 @@ $today = gmdate( 'Y-m-d' );
                                     </a>
                                 <?php elseif ( $is_blackout ) : ?>
                                     <span class="cvs-blackout-label"><?php esc_html_e( 'Closed', 'campus-visit-scheduler' ); ?></span>
+                                <?php elseif ( $is_excluded ) : ?>
+                                    <span class="cvs-exclusion-label"><?php esc_html_e( 'Holiday', 'campus-visit-scheduler' ); ?></span>
                                 <?php endif; ?>
                             </td>
                             <?php

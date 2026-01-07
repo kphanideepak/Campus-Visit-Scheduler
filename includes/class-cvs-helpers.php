@@ -177,6 +177,308 @@ class CVS_Helpers {
     }
 
     /**
+     * Check if a date falls within an exclusion period
+     *
+     * @param string $date Date to check (Y-m-d format).
+     * @return bool|array False if not excluded, array with period info if excluded.
+     */
+    public static function is_excluded_date( $date ) {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'cvs_exclusion_periods';
+        $check_date = $date;
+        $check_year = (int) gmdate( 'Y', strtotime( $date ) );
+        $check_month_day = gmdate( 'm-d', strtotime( $date ) );
+
+        // Get all exclusion periods
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $periods = $wpdb->get_results( "SELECT * FROM $table", ARRAY_A );
+
+        if ( empty( $periods ) ) {
+            return false;
+        }
+
+        foreach ( $periods as $period ) {
+            $start_date = $period['start_date'];
+            $end_date = $period['end_date'];
+
+            if ( $period['recurring_yearly'] ) {
+                // For recurring periods, adjust year to match check date
+                $start_month_day = gmdate( 'm-d', strtotime( $start_date ) );
+                $end_month_day = gmdate( 'm-d', strtotime( $end_date ) );
+
+                // Check if period spans year boundary (e.g., Dec 20 - Jan 27)
+                if ( $start_month_day > $end_month_day ) {
+                    // Period spans year boundary
+                    // Check if date is in the end-of-year portion (e.g., Dec 20 - Dec 31)
+                    $adjusted_start = $check_year . '-' . $start_month_day;
+                    $adjusted_end = $check_year . '-12-31';
+                    if ( $check_date >= $adjusted_start && $check_date <= $adjusted_end ) {
+                        return array(
+                            'period_name' => $period['period_name'],
+                            'start_date'  => $adjusted_start,
+                            'end_date'    => ( $check_year + 1 ) . '-' . $end_month_day,
+                        );
+                    }
+
+                    // Check if date is in the start-of-year portion (e.g., Jan 1 - Jan 27)
+                    $adjusted_start = ( $check_year - 1 ) . '-' . $start_month_day;
+                    $adjusted_end = $check_year . '-' . $end_month_day;
+                    if ( $check_date >= $check_year . '-01-01' && $check_date <= $adjusted_end ) {
+                        return array(
+                            'period_name' => $period['period_name'],
+                            'start_date'  => $adjusted_start,
+                            'end_date'    => $adjusted_end,
+                        );
+                    }
+                } else {
+                    // Period within same year
+                    $adjusted_start = $check_year . '-' . $start_month_day;
+                    $adjusted_end = $check_year . '-' . $end_month_day;
+
+                    // Handle Feb 29 for non-leap years
+                    if ( ! checkdate( 2, 29, $check_year ) ) {
+                        if ( '02-29' === $start_month_day ) {
+                            $adjusted_start = $check_year . '-02-28';
+                        }
+                        if ( '02-29' === $end_month_day ) {
+                            $adjusted_end = $check_year . '-02-28';
+                        }
+                    }
+
+                    if ( $check_date >= $adjusted_start && $check_date <= $adjusted_end ) {
+                        return array(
+                            'period_name' => $period['period_name'],
+                            'start_date'  => $adjusted_start,
+                            'end_date'    => $adjusted_end,
+                        );
+                    }
+                }
+            } else {
+                // Non-recurring period - direct date comparison
+                if ( $check_date >= $start_date && $check_date <= $end_date ) {
+                    return array(
+                        'period_name' => $period['period_name'],
+                        'start_date'  => $start_date,
+                        'end_date'    => $end_date,
+                    );
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if a date is unavailable (blackout or excluded)
+     *
+     * @param string $date Date to check (Y-m-d format).
+     * @return bool|string False if available, error message if not.
+     */
+    public static function is_date_unavailable( $date ) {
+        // Check blackout dates first
+        if ( self::is_blackout_date( $date ) ) {
+            return __( 'Tours are not available on this date.', 'campus-visit-scheduler' );
+        }
+
+        // Check exclusion periods
+        $exclusion = self::is_excluded_date( $date );
+        if ( $exclusion ) {
+            return sprintf(
+                /* translators: %s: holiday period name */
+                __( 'This date falls within %s and is not available for bookings.', 'campus-visit-scheduler' ),
+                $exclusion['period_name']
+            );
+        }
+
+        return false;
+    }
+
+    /**
+     * Get all exclusion periods
+     *
+     * @return array Array of exclusion periods.
+     */
+    public static function get_exclusion_periods() {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'cvs_exclusion_periods';
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        return $wpdb->get_results( "SELECT * FROM $table ORDER BY start_date ASC", ARRAY_A );
+    }
+
+    /**
+     * Get exclusion period by ID
+     *
+     * @param int $id Period ID.
+     * @return array|null Period data or null if not found.
+     */
+    public static function get_exclusion_period( $id ) {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'cvs_exclusion_periods';
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        return $wpdb->get_row(
+            $wpdb->prepare( "SELECT * FROM $table WHERE id = %d", $id ),
+            ARRAY_A
+        );
+    }
+
+    /**
+     * Add exclusion period
+     *
+     * @param array $data Period data.
+     * @return int|WP_Error Period ID on success, WP_Error on failure.
+     */
+    public static function add_exclusion_period( $data ) {
+        global $wpdb;
+
+        $period_name = sanitize_text_field( $data['period_name'] );
+        $start_date = sanitize_text_field( $data['start_date'] );
+        $end_date = sanitize_text_field( $data['end_date'] );
+        $recurring_yearly = isset( $data['recurring_yearly'] ) && $data['recurring_yearly'] ? 1 : 0;
+
+        // Validation
+        if ( empty( $period_name ) ) {
+            return new WP_Error( 'empty_name', __( 'Period name is required.', 'campus-visit-scheduler' ) );
+        }
+
+        if ( empty( $start_date ) || empty( $end_date ) ) {
+            return new WP_Error( 'empty_dates', __( 'Start and end dates are required.', 'campus-visit-scheduler' ) );
+        }
+
+        if ( $start_date > $end_date && ! $recurring_yearly ) {
+            return new WP_Error( 'invalid_dates', __( 'Start date must be before or equal to end date.', 'campus-visit-scheduler' ) );
+        }
+
+        $table = $wpdb->prefix . 'cvs_exclusion_periods';
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+        $result = $wpdb->insert(
+            $table,
+            array(
+                'period_name'      => $period_name,
+                'start_date'       => $start_date,
+                'end_date'         => $end_date,
+                'recurring_yearly' => $recurring_yearly,
+            ),
+            array( '%s', '%s', '%s', '%d' )
+        );
+
+        if ( false === $result ) {
+            return new WP_Error( 'db_error', __( 'Failed to add exclusion period.', 'campus-visit-scheduler' ) );
+        }
+
+        return $wpdb->insert_id;
+    }
+
+    /**
+     * Update exclusion period
+     *
+     * @param int   $id Period ID.
+     * @param array $data Period data.
+     * @return bool|WP_Error True on success, WP_Error on failure.
+     */
+    public static function update_exclusion_period( $id, $data ) {
+        global $wpdb;
+
+        $period_name = sanitize_text_field( $data['period_name'] );
+        $start_date = sanitize_text_field( $data['start_date'] );
+        $end_date = sanitize_text_field( $data['end_date'] );
+        $recurring_yearly = isset( $data['recurring_yearly'] ) && $data['recurring_yearly'] ? 1 : 0;
+
+        // Validation
+        if ( empty( $period_name ) ) {
+            return new WP_Error( 'empty_name', __( 'Period name is required.', 'campus-visit-scheduler' ) );
+        }
+
+        if ( empty( $start_date ) || empty( $end_date ) ) {
+            return new WP_Error( 'empty_dates', __( 'Start and end dates are required.', 'campus-visit-scheduler' ) );
+        }
+
+        if ( $start_date > $end_date && ! $recurring_yearly ) {
+            return new WP_Error( 'invalid_dates', __( 'Start date must be before or equal to end date.', 'campus-visit-scheduler' ) );
+        }
+
+        $table = $wpdb->prefix . 'cvs_exclusion_periods';
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $result = $wpdb->update(
+            $table,
+            array(
+                'period_name'      => $period_name,
+                'start_date'       => $start_date,
+                'end_date'         => $end_date,
+                'recurring_yearly' => $recurring_yearly,
+            ),
+            array( 'id' => $id ),
+            array( '%s', '%s', '%s', '%d' ),
+            array( '%d' )
+        );
+
+        if ( false === $result ) {
+            return new WP_Error( 'db_error', __( 'Failed to update exclusion period.', 'campus-visit-scheduler' ) );
+        }
+
+        return true;
+    }
+
+    /**
+     * Delete exclusion period
+     *
+     * @param int $id Period ID.
+     * @return bool True on success.
+     */
+    public static function delete_exclusion_period( $id ) {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'cvs_exclusion_periods';
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        return false !== $wpdb->delete( $table, array( 'id' => $id ), array( '%d' ) );
+    }
+
+    /**
+     * Check if exclusion period is currently active
+     *
+     * @param array $period Period data.
+     * @return bool True if currently active.
+     */
+    public static function is_exclusion_period_active( $period ) {
+        $today = self::get_today();
+        $check_date = $today;
+
+        if ( $period['recurring_yearly'] ) {
+            $check_year = (int) gmdate( 'Y' );
+            $start_month_day = gmdate( 'm-d', strtotime( $period['start_date'] ) );
+            $end_month_day = gmdate( 'm-d', strtotime( $period['end_date'] ) );
+
+            // Handle year boundary
+            if ( $start_month_day > $end_month_day ) {
+                $today_month_day = gmdate( 'm-d' );
+                if ( $today_month_day >= $start_month_day || $today_month_day <= $end_month_day ) {
+                    return true;
+                }
+            } else {
+                $adjusted_start = $check_year . '-' . $start_month_day;
+                $adjusted_end = $check_year . '-' . $end_month_day;
+
+                if ( $check_date >= $adjusted_start && $check_date <= $adjusted_end ) {
+                    return true;
+                }
+            }
+        } else {
+            if ( $check_date >= $period['start_date'] && $check_date <= $period['end_date'] ) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Check if bookings are currently enabled
      *
      * @return bool True if bookings are enabled.

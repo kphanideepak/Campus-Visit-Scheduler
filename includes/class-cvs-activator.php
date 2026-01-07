@@ -110,11 +110,27 @@ class CVS_Activator {
             UNIQUE KEY email (email)
         ) $charset_collate;";
 
+        // Exclusion periods table (holiday periods)
+        $table_exclusions = $wpdb->prefix . 'cvs_exclusion_periods';
+        $sql_exclusions = "CREATE TABLE $table_exclusions (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            period_name varchar(255) NOT NULL,
+            start_date date NOT NULL,
+            end_date date NOT NULL,
+            recurring_yearly tinyint(1) NOT NULL DEFAULT 0,
+            created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY start_date (start_date),
+            KEY end_date (end_date)
+        ) $charset_collate;";
+
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         dbDelta( $sql_schedules );
         dbDelta( $sql_bookings );
         dbDelta( $sql_blackouts );
         dbDelta( $sql_recipients );
+        dbDelta( $sql_exclusions );
 
         // Store database version
         update_option( 'cvs_db_version', CVS_VERSION );

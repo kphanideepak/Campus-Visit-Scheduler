@@ -21,6 +21,7 @@ $tables = array(
     $wpdb->prefix . 'cvs_bookings',
     $wpdb->prefix . 'cvs_blackout_dates',
     $wpdb->prefix . 'cvs_notification_recipients',
+    $wpdb->prefix . 'cvs_exclusion_periods',
 );
 
 foreach ( $tables as $table ) {
