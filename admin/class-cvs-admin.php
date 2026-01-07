@@ -41,6 +41,7 @@ class CVS_Admin {
         add_action( 'wp_ajax_cvs_update_exclusion_period', array( $this, 'ajax_update_exclusion_period' ) );
         add_action( 'wp_ajax_cvs_delete_exclusion_period', array( $this, 'ajax_delete_exclusion_period' ) );
         add_action( 'wp_ajax_cvs_reset_email_templates', array( $this, 'ajax_reset_email_templates' ) );
+        add_action( 'wp_ajax_cvs_send_test_email', array( $this, 'ajax_send_test_email' ) );
     }
 
     /**
@@ -748,5 +749,35 @@ We look forward to seeing you!
 
 Best regards,
 The School Team', 'campus-visit-scheduler' );
+    }
+
+    /**
+     * AJAX: Send test email
+     */
+    public function ajax_send_test_email() {
+        check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
+        }
+
+        $email_type = isset( $_POST['email_type'] ) ? sanitize_text_field( $_POST['email_type'] ) : '';
+        $to_email = isset( $_POST['to_email'] ) ? sanitize_email( $_POST['to_email'] ) : '';
+
+        if ( empty( $email_type ) || empty( $to_email ) ) {
+            wp_send_json_error( __( 'Please provide email type and recipient address.', 'campus-visit-scheduler' ) );
+        }
+
+        $result = CVS_Notifications::send_test_email( $email_type, $to_email );
+
+        if ( is_wp_error( $result ) ) {
+            wp_send_json_error( $result->get_error_message() );
+        }
+
+        wp_send_json_success( sprintf(
+            /* translators: %s: email address */
+            __( 'Test email sent successfully to %s', 'campus-visit-scheduler' ),
+            $to_email
+        ) );
     }
 }

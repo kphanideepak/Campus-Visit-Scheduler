@@ -27,6 +27,14 @@ class CVS_Notifications {
         $subject = get_option( 'cvs_confirmation_subject' );
         $body = get_option( 'cvs_confirmation_body' );
 
+        // Use defaults if templates are empty
+        if ( empty( $subject ) ) {
+            $subject = __( 'Your Campus Tour Booking Confirmation - {booking_reference}', 'campus-visit-scheduler' );
+        }
+        if ( empty( $body ) ) {
+            $body = self::get_default_confirmation_body();
+        }
+
         $subject = self::replace_placeholders( $subject, $booking );
         $body = self::replace_placeholders( $body, $booking );
 
@@ -42,6 +50,14 @@ class CVS_Notifications {
     public static function send_cancellation_email( $booking ) {
         $subject = get_option( 'cvs_cancellation_subject' );
         $body = get_option( 'cvs_cancellation_body' );
+
+        // Use defaults if templates are empty
+        if ( empty( $subject ) ) {
+            $subject = __( 'Campus Tour Booking Cancelled - {booking_reference}', 'campus-visit-scheduler' );
+        }
+        if ( empty( $body ) ) {
+            $body = self::get_default_cancellation_body();
+        }
 
         $subject = self::replace_placeholders( $subject, $booking );
         $body = self::replace_placeholders( $body, $booking );
@@ -65,6 +81,14 @@ class CVS_Notifications {
 
         $subject = get_option( 'cvs_admin_notification_subject' );
         $body = get_option( 'cvs_admin_notification_body' );
+
+        // Use defaults if templates are empty
+        if ( empty( $subject ) ) {
+            $subject = __( 'New Campus Tour Booking - {booking_reference}', 'campus-visit-scheduler' );
+        }
+        if ( empty( $body ) ) {
+            $body = self::get_default_admin_body();
+        }
 
         $subject = self::replace_placeholders( $subject, $booking );
         $body = self::replace_placeholders( $body, $booking );
@@ -125,6 +149,14 @@ class CVS_Notifications {
     public static function send_reminder_email( $booking ) {
         $subject = get_option( 'cvs_reminder_subject' );
         $body = get_option( 'cvs_reminder_body' );
+
+        // Use defaults if templates are empty
+        if ( empty( $subject ) ) {
+            $subject = __( 'Reminder: Your Campus Tour is Coming Up - {booking_reference}', 'campus-visit-scheduler' );
+        }
+        if ( empty( $body ) ) {
+            $body = self::get_default_reminder_body();
+        }
 
         $subject = self::replace_placeholders( $subject, $booking );
         $body = self::replace_placeholders( $body, $booking );
@@ -315,6 +347,192 @@ class CVS_Notifications {
         foreach ( $bookings as $booking ) {
             self::send_reminder_email( $booking );
         }
+    }
+
+    /**
+     * Send a test email
+     *
+     * @param string $email_type Type of email (confirmation, cancellation, admin, reminder).
+     * @param string $to_email Email address to send test to.
+     * @return bool|WP_Error True on success, WP_Error on failure.
+     */
+    public static function send_test_email( $email_type, $to_email ) {
+        if ( ! is_email( $to_email ) ) {
+            return new WP_Error( 'invalid_email', __( 'Invalid email address.', 'campus-visit-scheduler' ) );
+        }
+
+        // Create sample booking data for placeholders
+        $sample_booking = array(
+            'id'                   => 999,
+            'booking_reference'    => 'CVS-TEST-001',
+            'tour_date'            => gmdate( 'Y-m-d', strtotime( '+7 days' ) ),
+            'tour_time'            => '10:00:00',
+            'parent_name'          => 'John Smith',
+            'email'                => $to_email,
+            'phone'                => '0400 123 456',
+            'adults'               => 2,
+            'children'             => 1,
+            'child_name'           => 'Emily Smith',
+            'year_level'           => 'Year 7',
+            'special_requirements' => 'No special requirements - this is a test booking.',
+            'status'               => 'confirmed',
+        );
+
+        $result = false;
+
+        switch ( $email_type ) {
+            case 'confirmation':
+                $subject = get_option( 'cvs_confirmation_subject' );
+                $body = get_option( 'cvs_confirmation_body' );
+                if ( empty( $subject ) ) {
+                    $subject = __( 'Your Campus Tour Booking Confirmation - {booking_reference}', 'campus-visit-scheduler' );
+                }
+                if ( empty( $body ) ) {
+                    $body = self::get_default_confirmation_body();
+                }
+                break;
+
+            case 'cancellation':
+                $subject = get_option( 'cvs_cancellation_subject' );
+                $body = get_option( 'cvs_cancellation_body' );
+                if ( empty( $subject ) ) {
+                    $subject = __( 'Campus Tour Booking Cancelled - {booking_reference}', 'campus-visit-scheduler' );
+                }
+                if ( empty( $body ) ) {
+                    $body = self::get_default_cancellation_body();
+                }
+                break;
+
+            case 'admin':
+                $subject = get_option( 'cvs_admin_notification_subject' );
+                $body = get_option( 'cvs_admin_notification_body' );
+                if ( empty( $subject ) ) {
+                    $subject = __( 'New Campus Tour Booking - {booking_reference}', 'campus-visit-scheduler' );
+                }
+                if ( empty( $body ) ) {
+                    $body = self::get_default_admin_body();
+                }
+                break;
+
+            case 'reminder':
+                $subject = get_option( 'cvs_reminder_subject' );
+                $body = get_option( 'cvs_reminder_body' );
+                if ( empty( $subject ) ) {
+                    $subject = __( 'Reminder: Your Campus Tour is Coming Up - {booking_reference}', 'campus-visit-scheduler' );
+                }
+                if ( empty( $body ) ) {
+                    $body = self::get_default_reminder_body();
+                }
+                break;
+
+            default:
+                return new WP_Error( 'invalid_type', __( 'Invalid email type.', 'campus-visit-scheduler' ) );
+        }
+
+        // Add test indicator to subject
+        $subject = '[TEST] ' . $subject;
+
+        $subject = self::replace_placeholders( $subject, $sample_booking );
+        $body = self::replace_placeholders( $body, $sample_booking );
+
+        // Add test notice to body
+        $test_notice = __( "*** THIS IS A TEST EMAIL ***\n\nThe following is a preview of how your email template will look with sample data:\n\n---\n\n", 'campus-visit-scheduler' );
+        $body = $test_notice . $body;
+
+        $result = self::send_email( $to_email, $subject, $body );
+
+        if ( $result ) {
+            return true;
+        }
+
+        return new WP_Error( 'send_failed', __( 'Failed to send test email. Please check your WordPress email configuration.', 'campus-visit-scheduler' ) );
+    }
+
+    /**
+     * Get default confirmation email body
+     */
+    private static function get_default_confirmation_body() {
+        return __( 'Dear {parent_name},
+
+Thank you for booking a campus tour with us.
+
+Booking Details:
+- Reference: {booking_reference}
+- Date: {tour_date}
+- Time: {tour_time}
+- Group Size: {group_size}
+
+Please arrive 10 minutes before your scheduled tour time. Report to the main reception area.
+
+If you need to cancel or modify your booking, please contact us as soon as possible.
+
+We look forward to seeing you!
+
+Best regards,
+The School Team', 'campus-visit-scheduler' );
+    }
+
+    /**
+     * Get default cancellation email body
+     */
+    private static function get_default_cancellation_body() {
+        return __( 'Dear {parent_name},
+
+Your campus tour booking has been cancelled.
+
+Cancelled Booking Details:
+- Reference: {booking_reference}
+- Date: {tour_date}
+- Time: {tour_time}
+
+If you did not request this cancellation or would like to rebook, please contact us.
+
+Best regards,
+The School Team', 'campus-visit-scheduler' );
+    }
+
+    /**
+     * Get default admin notification email body
+     */
+    private static function get_default_admin_body() {
+        return __( 'A new campus tour booking has been received.
+
+Booking Details:
+- Reference: {booking_reference}
+- Parent Name: {parent_name}
+- Email: {email}
+- Phone: {phone}
+- Date: {tour_date}
+- Time: {tour_time}
+- Group Size: {group_size}
+
+Special Requirements:
+{special_requirements}
+
+View booking in admin: {admin_url}', 'campus-visit-scheduler' );
+    }
+
+    /**
+     * Get default reminder email body
+     */
+    private static function get_default_reminder_body() {
+        return __( 'Dear {parent_name},
+
+This is a friendly reminder that your campus tour is scheduled for:
+
+- Date: {tour_date}
+- Time: {tour_time}
+- Reference: {booking_reference}
+- Group Size: {group_size}
+
+Please arrive 10 minutes before your scheduled tour time. Report to the main reception area.
+
+If you need to cancel or modify your booking, please contact us as soon as possible.
+
+We look forward to seeing you!
+
+Best regards,
+The School Team', 'campus-visit-scheduler' );
     }
 }
 

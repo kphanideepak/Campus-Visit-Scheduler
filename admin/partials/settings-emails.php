@@ -9,10 +9,49 @@
 if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
+
+$admin_email = get_option( 'admin_email' );
 ?>
 
 <div class="cvs-email-settings">
     <h2><?php esc_html_e( 'Email Templates', 'campus-visit-scheduler' ); ?></h2>
+
+    <div class="cvs-test-email-section">
+        <h3><?php esc_html_e( 'Test Email', 'campus-visit-scheduler' ); ?></h3>
+        <p class="description"><?php esc_html_e( 'Send a test email to verify your email configuration is working correctly.', 'campus-visit-scheduler' ); ?></p>
+        <table class="form-table">
+            <tr>
+                <th scope="row">
+                    <label for="cvs_test_email_address"><?php esc_html_e( 'Send Test To', 'campus-visit-scheduler' ); ?></label>
+                </th>
+                <td>
+                    <input type="email" id="cvs_test_email_address" value="<?php echo esc_attr( $admin_email ); ?>" class="regular-text">
+                </td>
+            </tr>
+            <tr>
+                <th scope="row">
+                    <?php esc_html_e( 'Email Type', 'campus-visit-scheduler' ); ?>
+                </th>
+                <td>
+                    <button type="button" class="button cvs-send-test-email" data-type="confirmation">
+                        <?php esc_html_e( 'Test Confirmation', 'campus-visit-scheduler' ); ?>
+                    </button>
+                    <button type="button" class="button cvs-send-test-email" data-type="cancellation">
+                        <?php esc_html_e( 'Test Cancellation', 'campus-visit-scheduler' ); ?>
+                    </button>
+                    <button type="button" class="button cvs-send-test-email" data-type="admin">
+                        <?php esc_html_e( 'Test Admin Notification', 'campus-visit-scheduler' ); ?>
+                    </button>
+                    <button type="button" class="button cvs-send-test-email" data-type="reminder">
+                        <?php esc_html_e( 'Test Reminder', 'campus-visit-scheduler' ); ?>
+                    </button>
+                    <span id="cvs-test-email-status" style="margin-left: 10px;"></span>
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <hr>
 
     <div class="cvs-placeholder-help">
         <h3><?php esc_html_e( 'Available Placeholders', 'campus-visit-scheduler' ); ?></h3>
@@ -142,8 +181,75 @@ if ( ! defined( 'ABSPATH' ) ) {
     </form>
 </div>
 
+<style>
+.cvs-test-email-section {
+    background: #f0f6fc;
+    border: 1px solid #c3c4c7;
+    border-left: 4px solid #2271b1;
+    padding: 15px 20px;
+    margin: 20px 0;
+}
+.cvs-test-email-section h3 {
+    margin-top: 0;
+}
+.cvs-send-test-email {
+    margin-right: 5px !important;
+}
+#cvs-test-email-status {
+    font-style: italic;
+}
+#cvs-test-email-status.success {
+    color: #00a32a;
+}
+#cvs-test-email-status.error {
+    color: #d63638;
+}
+</style>
+
 <script>
 jQuery(document).ready(function($) {
+    // Send test email
+    $('.cvs-send-test-email').on('click', function() {
+        var $button = $(this);
+        var emailType = $button.data('type');
+        var toEmail = $('#cvs_test_email_address').val();
+        var $status = $('#cvs-test-email-status');
+
+        if (!toEmail) {
+            alert('<?php echo esc_js( __( 'Please enter an email address.', 'campus-visit-scheduler' ) ); ?>');
+            return;
+        }
+
+        // Disable all test buttons
+        $('.cvs-send-test-email').prop('disabled', true);
+        $status.removeClass('success error').text('<?php echo esc_js( __( 'Sending...', 'campus-visit-scheduler' ) ); ?>');
+
+        $.ajax({
+            url: cvs_admin.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'cvs_send_test_email',
+                nonce: cvs_admin.nonce,
+                email_type: emailType,
+                to_email: toEmail
+            },
+            success: function(response) {
+                if (response.success) {
+                    $status.addClass('success').text(response.data);
+                } else {
+                    $status.addClass('error').text(response.data || '<?php echo esc_js( __( 'Failed to send test email.', 'campus-visit-scheduler' ) ); ?>');
+                }
+            },
+            error: function() {
+                $status.addClass('error').text('<?php echo esc_js( __( 'An error occurred. Please try again.', 'campus-visit-scheduler' ) ); ?>');
+            },
+            complete: function() {
+                $('.cvs-send-test-email').prop('disabled', false);
+            }
+        });
+    });
+
+    // Reset email templates
     $('#cvs-reset-email-templates').on('click', function() {
         if (!confirm('<?php echo esc_js( __( 'Are you sure you want to reset all email templates to their default values? This cannot be undone.', 'campus-visit-scheduler' ) ); ?>')) {
             return;
