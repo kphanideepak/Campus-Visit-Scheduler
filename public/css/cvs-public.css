@@ -1,0 +1,505 @@
+/**
+ * Public styles for Campus Visit Scheduler
+ *
+ * @package CampusVisitScheduler
+ */
+
+/* Base styles */
+.cvs-booking-wrapper {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+/* Notices */
+.cvs-notice {
+    padding: 15px 20px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.cvs-notice-info {
+    background: #f0f6fc;
+    border: 1px solid #c3c4c7;
+    color: #1e3a5f;
+}
+
+.cvs-notice-error {
+    background: #fcf0f1;
+    border: 1px solid #d63638;
+    color: #8a1f1f;
+}
+
+.cvs-notice-success {
+    background: #f0fdf4;
+    border: 1px solid #10b981;
+    color: #166534;
+}
+
+/* Form sections */
+.cvs-form-section {
+    margin-bottom: 30px;
+    padding-bottom: 25px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.cvs-form-section:last-of-type {
+    border-bottom: none;
+}
+
+.cvs-form-section h3 {
+    margin: 0 0 20px 0;
+    font-size: 1.2em;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+/* Form rows and fields */
+.cvs-form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-bottom: 15px;
+}
+
+.cvs-form-field {
+    flex: 1;
+    min-width: 200px;
+}
+
+.cvs-form-field.cvs-full-width {
+    flex: 100%;
+    min-width: 100%;
+}
+
+.cvs-form-field label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+    color: #374151;
+}
+
+.cvs-form-field .required {
+    color: #dc2626;
+}
+
+.cvs-form-field input[type="text"],
+.cvs-form-field input[type="email"],
+.cvs-form-field input[type="tel"],
+.cvs-form-field select,
+.cvs-form-field textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 16px;
+    line-height: 1.5;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.cvs-form-field input:focus,
+.cvs-form-field select:focus,
+.cvs-form-field textarea:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.cvs-form-field textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.cvs-field-note {
+    margin: 5px 0 0 0;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+/* Time slots */
+.cvs-time-slots {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.cvs-select-date-prompt {
+    color: #6b7280;
+    font-style: italic;
+    margin: 0;
+}
+
+.cvs-time-slot {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 20px;
+    border: 2px solid #d1d5db;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #fff;
+    min-width: 100px;
+}
+
+.cvs-time-slot:hover:not(.cvs-time-slot-unavailable) {
+    border-color: #2563eb;
+    background: #f0f6fc;
+}
+
+.cvs-time-slot.cvs-time-slot-selected {
+    border-color: #2563eb;
+    background: #2563eb;
+    color: #fff;
+}
+
+.cvs-time-slot.cvs-time-slot-unavailable {
+    background: #f3f4f6;
+    border-color: #e5e7eb;
+    color: #9ca3af;
+    cursor: not-allowed;
+}
+
+.cvs-time-slot-time {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.cvs-time-slot-availability {
+    font-size: 12px;
+    margin-top: 4px;
+}
+
+.cvs-time-slot-available {
+    color: #059669;
+}
+
+.cvs-time-slot.cvs-time-slot-selected .cvs-time-slot-available {
+    color: #fff;
+}
+
+/* Total group size */
+.cvs-total-field {
+    max-width: 150px;
+}
+
+.cvs-total-group {
+    font-size: 24px;
+    font-weight: 700;
+    color: #2563eb;
+    padding: 10px;
+    background: #f0f6fc;
+    border-radius: 6px;
+    text-align: center;
+}
+
+.cvs-total-group.cvs-error {
+    background: #fcf0f1;
+    color: #dc2626;
+}
+
+/* Buttons */
+.cvs-btn {
+    display: inline-block;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    text-align: center;
+}
+
+.cvs-btn-primary {
+    background: #2563eb;
+    color: #fff;
+}
+
+.cvs-btn-primary:hover {
+    background: #1d4ed8;
+}
+
+.cvs-btn-primary:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+}
+
+.cvs-btn-secondary {
+    background: #fff;
+    color: #374151;
+    border: 2px solid #d1d5db;
+}
+
+.cvs-btn-secondary:hover {
+    border-color: #2563eb;
+    color: #2563eb;
+}
+
+/* Form actions */
+.cvs-form-actions {
+    margin-top: 30px;
+    text-align: center;
+}
+
+/* Form messages */
+.cvs-form-messages {
+    margin-top: 20px;
+}
+
+.cvs-form-messages .cvs-message {
+    padding: 12px 15px;
+    border-radius: 6px;
+    margin-bottom: 10px;
+}
+
+.cvs-form-messages .cvs-message-error {
+    background: #fcf0f1;
+    border: 1px solid #dc2626;
+    color: #8a1f1f;
+}
+
+.cvs-form-messages .cvs-message-success {
+    background: #f0fdf4;
+    border: 1px solid #10b981;
+    color: #166534;
+}
+
+/* Confirmation */
+.cvs-booking-confirmation {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.cvs-confirmation-icon {
+    color: #10b981;
+    margin-bottom: 20px;
+}
+
+.cvs-booking-confirmation h2 {
+    margin: 0 0 15px 0;
+    font-size: 1.8em;
+    color: #1f2937;
+}
+
+.cvs-confirmation-message {
+    color: #6b7280;
+    margin-bottom: 30px;
+}
+
+.cvs-booking-details {
+    background: #f9fafb;
+    border-radius: 8px;
+    padding: 25px;
+    margin: 30px auto;
+    max-width: 500px;
+    text-align: left;
+}
+
+.cvs-booking-details h3 {
+    margin: 0 0 15px 0;
+    font-size: 1.1em;
+    color: #1f2937;
+}
+
+.cvs-details-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.cvs-details-table th,
+.cvs-details-table td {
+    padding: 10px 0;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.cvs-details-table th {
+    text-align: left;
+    font-weight: 500;
+    color: #6b7280;
+    width: 150px;
+}
+
+.cvs-details-table td {
+    color: #1f2937;
+}
+
+.cvs-details-table tr:last-child th,
+.cvs-details-table tr:last-child td {
+    border-bottom: none;
+}
+
+.cvs-reference {
+    font-family: monospace;
+    font-size: 1.1em;
+    color: #2563eb;
+}
+
+.cvs-confirmation-actions {
+    margin: 30px 0;
+}
+
+.cvs-confirmation-note {
+    background: #fef3c7;
+    border-radius: 8px;
+    padding: 20px;
+    margin-top: 30px;
+    text-align: left;
+}
+
+.cvs-confirmation-note p {
+    margin: 0 0 10px 0;
+    color: #92400e;
+    font-size: 14px;
+}
+
+.cvs-confirmation-note p:last-child {
+    margin-bottom: 0;
+}
+
+/* Calendar display */
+.cvs-calendar-display {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.cvs-calendar-month {
+    text-align: center;
+    font-size: 1.3em;
+    margin-bottom: 15px;
+}
+
+.cvs-calendar-legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 15px;
+    font-size: 13px;
+}
+
+.cvs-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.cvs-legend-item::before {
+    content: '';
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+}
+
+.cvs-legend-available::before {
+    background: #d1fae5;
+}
+
+.cvs-legend-limited::before {
+    background: #fef3c7;
+}
+
+.cvs-legend-full::before {
+    background: #fee2e2;
+}
+
+.cvs-calendar-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.cvs-calendar-table th,
+.cvs-calendar-table td {
+    padding: 10px;
+    text-align: center;
+    border: 1px solid #e5e7eb;
+}
+
+.cvs-calendar-table th {
+    background: #f9fafb;
+    font-weight: 600;
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.cvs-day {
+    min-height: 50px;
+    vertical-align: middle;
+}
+
+.cvs-day-empty {
+    background: #f9fafb;
+}
+
+.cvs-day-today {
+    background: #dbeafe;
+    font-weight: 600;
+}
+
+.cvs-day-available {
+    background: #d1fae5;
+}
+
+.cvs-day-limited {
+    background: #fef3c7;
+}
+
+.cvs-day-full {
+    background: #fee2e2;
+}
+
+.cvs-calendar-note {
+    text-align: center;
+    color: #6b7280;
+    font-size: 14px;
+    margin-top: 15px;
+}
+
+/* Loading state */
+.cvs-loading {
+    position: relative;
+    pointer-events: none;
+}
+
+.cvs-loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+}
+
+/* Responsive */
+@media screen and (max-width: 600px) {
+    .cvs-form-row {
+        flex-direction: column;
+    }
+
+    .cvs-form-field {
+        min-width: 100%;
+    }
+
+    .cvs-time-slot {
+        min-width: 80px;
+        padding: 10px 15px;
+    }
+
+    .cvs-booking-details {
+        padding: 20px 15px;
+    }
+
+    .cvs-details-table th {
+        width: 120px;
+    }
+
+    .cvs-calendar-legend {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+}
