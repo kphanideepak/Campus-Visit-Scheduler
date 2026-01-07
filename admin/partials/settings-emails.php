@@ -133,6 +133,46 @@ if ( ! defined( 'ABSPATH' ) ) {
             </tr>
         </table>
 
-        <?php submit_button(); ?>
+        <p class="submit">
+            <?php submit_button( __( 'Save Changes', 'campus-visit-scheduler' ), 'primary', 'submit', false ); ?>
+            <button type="button" id="cvs-reset-email-templates" class="button button-secondary" style="margin-left: 10px;">
+                <?php esc_html_e( 'Reset to Defaults', 'campus-visit-scheduler' ); ?>
+            </button>
+        </p>
     </form>
 </div>
+
+<script>
+jQuery(document).ready(function($) {
+    $('#cvs-reset-email-templates').on('click', function() {
+        if (!confirm('<?php echo esc_js( __( 'Are you sure you want to reset all email templates to their default values? This cannot be undone.', 'campus-visit-scheduler' ) ); ?>')) {
+            return;
+        }
+
+        var $button = $(this);
+        $button.prop('disabled', true).text('<?php echo esc_js( __( 'Resetting...', 'campus-visit-scheduler' ) ); ?>');
+
+        $.ajax({
+            url: cvs_admin.ajax_url,
+            type: 'POST',
+            data: {
+                action: 'cvs_reset_email_templates',
+                nonce: cvs_admin.nonce
+            },
+            success: function(response) {
+                if (response.success) {
+                    alert('<?php echo esc_js( __( 'Email templates have been reset to defaults. Reloading page...', 'campus-visit-scheduler' ) ); ?>');
+                    location.reload();
+                } else {
+                    alert(response.data || '<?php echo esc_js( __( 'An error occurred.', 'campus-visit-scheduler' ) ); ?>');
+                    $button.prop('disabled', false).text('<?php echo esc_js( __( 'Reset to Defaults', 'campus-visit-scheduler' ) ); ?>');
+                }
+            },
+            error: function() {
+                alert('<?php echo esc_js( __( 'An error occurred. Please try again.', 'campus-visit-scheduler' ) ); ?>');
+                $button.prop('disabled', false).text('<?php echo esc_js( __( 'Reset to Defaults', 'campus-visit-scheduler' ) ); ?>');
+            }
+        });
+    });
+});
+</script>

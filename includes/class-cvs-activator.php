@@ -163,7 +163,9 @@ class CVS_Activator {
         );
 
         foreach ( $default_options as $option_name => $default_value ) {
-            if ( false === get_option( $option_name ) ) {
+            $current_value = get_option( $option_name );
+            // Set default if option doesn't exist OR if it's empty (but not zero for numeric options)
+            if ( false === $current_value || ( '' === $current_value && ! is_numeric( $default_value ) ) ) {
                 update_option( $option_name, $default_value );
             }
         }

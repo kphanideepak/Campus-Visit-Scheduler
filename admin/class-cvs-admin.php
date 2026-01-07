@@ -40,6 +40,7 @@ class CVS_Admin {
         add_action( 'wp_ajax_cvs_add_exclusion_period', array( $this, 'ajax_add_exclusion_period' ) );
         add_action( 'wp_ajax_cvs_update_exclusion_period', array( $this, 'ajax_update_exclusion_period' ) );
         add_action( 'wp_ajax_cvs_delete_exclusion_period', array( $this, 'ajax_delete_exclusion_period' ) );
+        add_action( 'wp_ajax_cvs_reset_email_templates', array( $this, 'ajax_reset_email_templates' ) );
     }
 
     /**
@@ -629,5 +630,123 @@ class CVS_Admin {
         } else {
             wp_send_json_error( __( 'Failed to delete holiday period.', 'campus-visit-scheduler' ) );
         }
+    }
+
+    /**
+     * AJAX: Reset email templates to defaults
+     */
+    public function ajax_reset_email_templates() {
+        check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
+        }
+
+        require_once CVS_PLUGIN_DIR . 'includes/class-cvs-activator.php';
+
+        // Get default templates directly
+        $defaults = array(
+            'cvs_confirmation_subject'       => __( 'Your Campus Tour Booking Confirmation - {booking_reference}', 'campus-visit-scheduler' ),
+            'cvs_confirmation_body'          => self::get_default_confirmation_email(),
+            'cvs_cancellation_subject'       => __( 'Campus Tour Booking Cancelled - {booking_reference}', 'campus-visit-scheduler' ),
+            'cvs_cancellation_body'          => self::get_default_cancellation_email(),
+            'cvs_admin_notification_subject' => __( 'New Campus Tour Booking - {booking_reference}', 'campus-visit-scheduler' ),
+            'cvs_admin_notification_body'    => self::get_default_admin_email(),
+            'cvs_reminder_subject'           => __( 'Reminder: Your Campus Tour is Coming Up - {booking_reference}', 'campus-visit-scheduler' ),
+            'cvs_reminder_body'              => self::get_default_reminder_email(),
+        );
+
+        foreach ( $defaults as $option_name => $default_value ) {
+            update_option( $option_name, $default_value );
+        }
+
+        wp_send_json_success( __( 'Email templates reset to defaults.', 'campus-visit-scheduler' ) );
+    }
+
+    /**
+     * Get default confirmation email template
+     */
+    private static function get_default_confirmation_email() {
+        return __( 'Dear {parent_name},
+
+Thank you for booking a campus tour with us.
+
+Booking Details:
+- Reference: {booking_reference}
+- Date: {tour_date}
+- Time: {tour_time}
+- Group Size: {group_size}
+
+Please arrive 10 minutes before your scheduled tour time. Report to the main reception area.
+
+If you need to cancel or modify your booking, please contact us as soon as possible.
+
+We look forward to seeing you!
+
+Best regards,
+The School Team', 'campus-visit-scheduler' );
+    }
+
+    /**
+     * Get default cancellation email template
+     */
+    private static function get_default_cancellation_email() {
+        return __( 'Dear {parent_name},
+
+Your campus tour booking has been cancelled.
+
+Cancelled Booking Details:
+- Reference: {booking_reference}
+- Date: {tour_date}
+- Time: {tour_time}
+
+If you did not request this cancellation or would like to rebook, please contact us.
+
+Best regards,
+The School Team', 'campus-visit-scheduler' );
+    }
+
+    /**
+     * Get default admin notification email template
+     */
+    private static function get_default_admin_email() {
+        return __( 'A new campus tour booking has been received.
+
+Booking Details:
+- Reference: {booking_reference}
+- Parent Name: {parent_name}
+- Email: {email}
+- Phone: {phone}
+- Date: {tour_date}
+- Time: {tour_time}
+- Group Size: {group_size}
+
+Special Requirements:
+{special_requirements}
+
+View booking in admin: {admin_url}', 'campus-visit-scheduler' );
+    }
+
+    /**
+     * Get default reminder email template
+     */
+    private static function get_default_reminder_email() {
+        return __( 'Dear {parent_name},
+
+This is a friendly reminder that your campus tour is scheduled for:
+
+- Date: {tour_date}
+- Time: {tour_time}
+- Reference: {booking_reference}
+- Group Size: {group_size}
+
+Please arrive 10 minutes before your scheduled tour time. Report to the main reception area.
+
+If you need to cancel or modify your booking, please contact us as soon as possible.
+
+We look forward to seeing you!
+
+Best regards,
+The School Team', 'campus-visit-scheduler' );
     }
 }
