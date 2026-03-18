@@ -14,6 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 $current_tab = isset( $_GET['tab'] ) ? sanitize_text_field( $_GET['tab'] ) : 'general';
 $tabs = array(
     'general'       => __( 'General', 'campus-visit-scheduler' ),
+    'form_fields'   => __( 'Form Fields', 'campus-visit-scheduler' ),
     'tour_schedule' => __( 'Tour Schedule', 'campus-visit-scheduler' ),
     'blackout'      => __( 'Blackout Dates', 'campus-visit-scheduler' ),
     'holidays'      => __( 'Holiday Periods', 'campus-visit-scheduler' ),
@@ -37,6 +38,9 @@ $tabs = array(
     <div class="cvs-settings-content">
         <?php
         switch ( $current_tab ) {
+            case 'form_fields':
+                include 'settings-form-fields.php';
+                break;
             case 'tour_schedule':
                 include 'settings-tour-schedule.php';
                 break;

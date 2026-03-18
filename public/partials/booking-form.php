@@ -117,32 +117,35 @@ $max_group_size = (int) get_option( 'cvs_max_group_size', 6 );
             </div>
         </div>
 
-        <div class="cvs-form-section">
-            <h3><?php esc_html_e( 'Child Information (Optional)', 'campus-visit-scheduler' ); ?></h3>
-
-            <div class="cvs-form-row">
-                <div class="cvs-form-field">
-                    <label for="cvs-child-name"><?php esc_html_e( 'Child\'s Name', 'campus-visit-scheduler' ); ?></label>
-                    <input type="text" id="cvs-child-name" name="child_name" maxlength="255">
+        <?php
+        $enabled_fields = CVS_Form_Fields::get_enabled_fields();
+        if ( ! empty( $enabled_fields ) ) :
+            // Group fields by section
+            $child_info_fields = array_filter( $enabled_fields, function( $f ) {
+                return isset( $f['section'] ) && 'child_info' === $f['section'];
+            });
+            $additional_fields = array_filter( $enabled_fields, function( $f ) {
+                return ! isset( $f['section'] ) || 'additional' === $f['section'];
+            });
+        ?>
+            <?php if ( ! empty( $child_info_fields ) ) : ?>
+                <div class="cvs-form-section">
+                    <h3><?php esc_html_e( 'Child Information (Optional)', 'campus-visit-scheduler' ); ?></h3>
+                    <?php foreach ( $child_info_fields as $field ) : ?>
+                        <?php CVS_Form_Fields::render_field( $field ); ?>
+                    <?php endforeach; ?>
                 </div>
+            <?php endif; ?>
 
-                <div class="cvs-form-field">
-                    <label for="cvs-year-level"><?php esc_html_e( 'Intended Year Level', 'campus-visit-scheduler' ); ?></label>
-                    <select id="cvs-year-level" name="year_level">
-                        <?php foreach ( $year_levels as $value => $label ) : ?>
-                            <option value="<?php echo esc_attr( $value ); ?>"><?php echo esc_html( $label ); ?></option>
-                        <?php endforeach; ?>
-                    </select>
+            <?php if ( ! empty( $additional_fields ) ) : ?>
+                <div class="cvs-form-section">
+                    <h3><?php esc_html_e( 'Additional Information', 'campus-visit-scheduler' ); ?></h3>
+                    <?php foreach ( $additional_fields as $field ) : ?>
+                        <?php CVS_Form_Fields::render_field( $field ); ?>
+                    <?php endforeach; ?>
                 </div>
-            </div>
-
-            <div class="cvs-form-row">
-                <div class="cvs-form-field cvs-full-width">
-                    <label for="cvs-special-requirements"><?php esc_html_e( 'Special Requirements or Notes', 'campus-visit-scheduler' ); ?></label>
-                    <textarea id="cvs-special-requirements" name="special_requirements" rows="3" maxlength="1000"></textarea>
-                </div>
-            </div>
-        </div>
+            <?php endif; ?>
+        <?php endif; ?>
 
         <div class="cvs-form-actions">
             <button type="submit" id="cvs-submit-booking" class="cvs-btn cvs-btn-primary">

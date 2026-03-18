@@ -128,23 +128,45 @@
             // Disable submit button
             $submit.prop('disabled', true).text(cvs_public.strings.loading);
 
+            // Build form data
+            var formData = {
+                action: 'cvs_submit_booking',
+                nonce: cvs_public.nonce,
+                tour_date: $('#cvs-tour-date').val(),
+                tour_time: $('#cvs-tour-time').val(),
+                parent_name: $('#cvs-parent-name').val(),
+                email: $('#cvs-email').val(),
+                phone: $('#cvs-phone').val(),
+                adults: $('#cvs-adults').val(),
+                children: $('#cvs-children').val()
+            };
+
+            // Collect built-in optional fields by their original names
+            if ($('#cvs-child-name').length) {
+                formData.child_name = $('#cvs-child-name').val();
+            }
+            if ($('#cvs-year-level').length) {
+                formData.year_level = $('#cvs-year-level').val();
+            }
+            if ($('#cvs-special-requirements').length) {
+                formData.special_requirements = $('#cvs-special-requirements').val();
+            }
+
+            // Collect custom fields
+            $('[name^="cvs_custom_fields["]').each(function() {
+                var $input = $(this);
+                var name = $input.attr('name');
+                if ($input.is(':checkbox')) {
+                    formData[name] = $input.is(':checked') ? '1' : '0';
+                } else {
+                    formData[name] = $input.val();
+                }
+            });
+
             $.ajax({
                 url: cvs_public.ajax_url,
                 type: 'POST',
-                data: {
-                    action: 'cvs_submit_booking',
-                    nonce: cvs_public.nonce,
-                    tour_date: $('#cvs-tour-date').val(),
-                    tour_time: $('#cvs-tour-time').val(),
-                    parent_name: $('#cvs-parent-name').val(),
-                    email: $('#cvs-email').val(),
-                    phone: $('#cvs-phone').val(),
-                    adults: $('#cvs-adults').val(),
-                    children: $('#cvs-children').val(),
-                    child_name: $('#cvs-child-name').val(),
-                    year_level: $('#cvs-year-level').val(),
-                    special_requirements: $('#cvs-special-requirements').val()
-                },
+                data: formData,
                 success: function(response) {
                     if (response.success) {
                         CVS.showConfirmation(response.data);
@@ -199,6 +221,26 @@
 
             if (total > maxSize) {
                 errors.push('Group size cannot exceed ' + maxSize + ' people.');
+            }
+
+            // Validate required custom fields
+            if (cvs_public.custom_fields && cvs_public.custom_fields.length > 0) {
+                $.each(cvs_public.custom_fields, function(index, field) {
+                    if (field.required) {
+                        var $input = $('[name="cvs_custom_fields[' + field.id + ']"]');
+                        if ($input.length) {
+                            var val = '';
+                            if ($input.is(':checkbox')) {
+                                val = $input.is(':checked') ? '1' : '';
+                            } else {
+                                val = $input.val();
+                            }
+                            if (!val || !val.trim()) {
+                                errors.push(field.label + ' is required.');
+                            }
+                        }
+                    }
+                });
             }
 
             return errors;

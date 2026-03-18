@@ -375,6 +375,24 @@ class CVS_Booking {
 
         $booking_id = $wpdb->insert_id;
 
+        // Insert custom field values
+        if ( ! empty( $data['custom_field_values'] ) && is_array( $data['custom_field_values'] ) ) {
+            $custom_fields_table = $wpdb->prefix . 'cvs_booking_custom_fields';
+
+            foreach ( $data['custom_field_values'] as $cf_id => $cf_value ) {
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+                $wpdb->insert(
+                    $custom_fields_table,
+                    array(
+                        'booking_id'  => $booking_id,
+                        'field_id'    => sanitize_text_field( $cf_id ),
+                        'field_value' => is_bool( $cf_value ) ? ( $cf_value ? '1' : '0' ) : sanitize_text_field( (string) $cf_value ),
+                    ),
+                    array( '%d', '%s', '%s' )
+                );
+            }
+        }
+
         $wpdb->query( 'COMMIT' );
 
         // Get the full booking data
@@ -421,6 +439,36 @@ class CVS_Booking {
             $wpdb->prepare( "SELECT * FROM $table WHERE booking_reference = %s", $reference ),
             ARRAY_A
         );
+    }
+
+    /**
+     * Get custom field values for a booking
+     *
+     * @param int $booking_id Booking ID.
+     * @return array Associative array of field_id => field_value.
+     */
+    public static function get_custom_field_values( $booking_id ) {
+        global $wpdb;
+
+        $table = $wpdb->prefix . 'cvs_booking_custom_fields';
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
+        $results = $wpdb->get_results(
+            $wpdb->prepare(
+                "SELECT field_id, field_value FROM $table WHERE booking_id = %d",
+                $booking_id
+            ),
+            ARRAY_A
+        );
+
+        $values = array();
+        if ( $results ) {
+            foreach ( $results as $row ) {
+                $values[ $row['field_id'] ] = $row['field_value'];
+            }
+        }
+
+        return $values;
     }
 
     /**
@@ -689,8 +737,11 @@ class CVS_Booking {
 
         $csv = array();
 
+        // Get custom field definitions for column headers
+        $custom_fields = class_exists( 'CVS_Form_Fields' ) ? CVS_Form_Fields::get_custom_fields() : array();
+
         // Headers
-        $csv[] = array(
+        $headers = array(
             __( 'Reference', 'campus-visit-scheduler' ),
             __( 'Date', 'campus-visit-scheduler' ),
             __( 'Time', 'campus-visit-scheduler' ),
@@ -706,8 +757,15 @@ class CVS_Booking {
             __( 'Created', 'campus-visit-scheduler' ),
         );
 
+        // Add custom field columns
+        foreach ( $custom_fields as $cf ) {
+            $headers[] = $cf['label'];
+        }
+
+        $csv[] = $headers;
+
         foreach ( $result['bookings'] as $booking ) {
-            $csv[] = array(
+            $row = array(
                 $booking['booking_reference'],
                 $booking['tour_date'],
                 $booking['tour_time'],
@@ -722,6 +780,16 @@ class CVS_Booking {
                 $booking['status'],
                 $booking['created_at'],
             );
+
+            // Add custom field values
+            if ( ! empty( $custom_fields ) ) {
+                $cf_values = self::get_custom_field_values( $booking['id'] );
+                foreach ( $custom_fields as $cf ) {
+                    $row[] = isset( $cf_values[ $cf['id'] ] ) ? $cf_values[ $cf['id'] ] : '';
+                }
+            }
+
+            $csv[] = $row;
         }
 
         $output = '';

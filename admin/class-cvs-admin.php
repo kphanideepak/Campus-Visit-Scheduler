@@ -42,6 +42,13 @@ class CVS_Admin {
         add_action( 'wp_ajax_cvs_delete_exclusion_period', array( $this, 'ajax_delete_exclusion_period' ) );
         add_action( 'wp_ajax_cvs_reset_email_templates', array( $this, 'ajax_reset_email_templates' ) );
         add_action( 'wp_ajax_cvs_send_test_email', array( $this, 'ajax_send_test_email' ) );
+
+        // Form fields AJAX handlers
+        add_action( 'wp_ajax_cvs_toggle_builtin_field', array( $this, 'ajax_toggle_builtin_field' ) );
+        add_action( 'wp_ajax_cvs_add_custom_field', array( $this, 'ajax_add_custom_field' ) );
+        add_action( 'wp_ajax_cvs_update_custom_field', array( $this, 'ajax_update_custom_field' ) );
+        add_action( 'wp_ajax_cvs_delete_custom_field', array( $this, 'ajax_delete_custom_field' ) );
+        add_action( 'wp_ajax_cvs_reorder_field', array( $this, 'ajax_reorder_field' ) );
     }
 
     /**
@@ -779,5 +786,147 @@ The School Team', 'campus-visit-scheduler' );
             __( 'Test email sent successfully to %s', 'campus-visit-scheduler' ),
             $to_email
         ) );
+    }
+
+    /**
+     * AJAX: Toggle a built-in optional field on/off
+     */
+    public function ajax_toggle_builtin_field() {
+        check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
+        }
+
+        $field_id = isset( $_POST['field_id'] ) ? sanitize_text_field( $_POST['field_id'] ) : '';
+        $enabled  = isset( $_POST['enabled'] ) && '1' === $_POST['enabled'];
+
+        if ( empty( $field_id ) ) {
+            wp_send_json_error( __( 'Invalid field ID.', 'campus-visit-scheduler' ) );
+        }
+
+        $result = CVS_Form_Fields::update_field( $field_id, array( 'enabled' => $enabled ) );
+
+        if ( is_wp_error( $result ) ) {
+            wp_send_json_error( $result->get_error_message() );
+        }
+
+        wp_send_json_success( __( 'Field updated.', 'campus-visit-scheduler' ) );
+    }
+
+    /**
+     * AJAX: Add a custom field
+     */
+    public function ajax_add_custom_field() {
+        check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
+        }
+
+        $data = array(
+            'label'       => isset( $_POST['label'] ) ? sanitize_text_field( $_POST['label'] ) : '',
+            'field_type'  => isset( $_POST['field_type'] ) ? sanitize_text_field( $_POST['field_type'] ) : 'text',
+            'required'    => isset( $_POST['required'] ) && '1' === $_POST['required'],
+            'placeholder' => isset( $_POST['placeholder'] ) ? sanitize_text_field( $_POST['placeholder'] ) : '',
+            'max_length'  => isset( $_POST['max_length'] ) ? absint( $_POST['max_length'] ) : 255,
+            'options'     => isset( $_POST['options'] ) ? sanitize_textarea_field( $_POST['options'] ) : '',
+        );
+
+        $result = CVS_Form_Fields::add_field( $data );
+
+        if ( is_wp_error( $result ) ) {
+            wp_send_json_error( $result->get_error_message() );
+        }
+
+        wp_send_json_success( array(
+            'field_id' => $result,
+            'message'  => __( 'Custom field added.', 'campus-visit-scheduler' ),
+        ) );
+    }
+
+    /**
+     * AJAX: Update a custom field
+     */
+    public function ajax_update_custom_field() {
+        check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
+        }
+
+        $field_id = isset( $_POST['field_id'] ) ? sanitize_text_field( $_POST['field_id'] ) : '';
+
+        if ( empty( $field_id ) ) {
+            wp_send_json_error( __( 'Invalid field ID.', 'campus-visit-scheduler' ) );
+        }
+
+        $data = array(
+            'label'       => isset( $_POST['label'] ) ? sanitize_text_field( $_POST['label'] ) : '',
+            'field_type'  => isset( $_POST['field_type'] ) ? sanitize_text_field( $_POST['field_type'] ) : 'text',
+            'required'    => isset( $_POST['required'] ) && '1' === $_POST['required'],
+            'placeholder' => isset( $_POST['placeholder'] ) ? sanitize_text_field( $_POST['placeholder'] ) : '',
+            'max_length'  => isset( $_POST['max_length'] ) ? absint( $_POST['max_length'] ) : 255,
+            'options'     => isset( $_POST['options'] ) ? sanitize_textarea_field( $_POST['options'] ) : '',
+        );
+
+        $result = CVS_Form_Fields::update_field( $field_id, $data );
+
+        if ( is_wp_error( $result ) ) {
+            wp_send_json_error( $result->get_error_message() );
+        }
+
+        wp_send_json_success( __( 'Custom field updated.', 'campus-visit-scheduler' ) );
+    }
+
+    /**
+     * AJAX: Delete a custom field
+     */
+    public function ajax_delete_custom_field() {
+        check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
+        }
+
+        $field_id = isset( $_POST['field_id'] ) ? sanitize_text_field( $_POST['field_id'] ) : '';
+
+        if ( empty( $field_id ) ) {
+            wp_send_json_error( __( 'Invalid field ID.', 'campus-visit-scheduler' ) );
+        }
+
+        $result = CVS_Form_Fields::delete_field( $field_id );
+
+        if ( is_wp_error( $result ) ) {
+            wp_send_json_error( $result->get_error_message() );
+        }
+
+        wp_send_json_success( __( 'Custom field deleted.', 'campus-visit-scheduler' ) );
+    }
+
+    /**
+     * AJAX: Reorder a field (move up or down)
+     */
+    public function ajax_reorder_field() {
+        check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
+        }
+
+        $field_id  = isset( $_POST['field_id'] ) ? sanitize_text_field( $_POST['field_id'] ) : '';
+        $direction = isset( $_POST['direction'] ) ? sanitize_text_field( $_POST['direction'] ) : '';
+
+        if ( empty( $field_id ) || ! in_array( $direction, array( 'up', 'down' ), true ) ) {
+            wp_send_json_error( __( 'Invalid request.', 'campus-visit-scheduler' ) );
+        }
+
+        $result = CVS_Form_Fields::move_field( $field_id, $direction );
+
+        if ( is_wp_error( $result ) ) {
+            wp_send_json_error( $result->get_error_message() );
+        }
+
+        wp_send_json_success( __( 'Field reordered.', 'campus-visit-scheduler' ) );
     }
 }

@@ -69,6 +69,18 @@ $admin_email = get_option( 'admin_email' );
         <code>{year_level}</code>
         <code>{special_requirements}</code>
         <code>{admin_url}</code>
+        <code>{custom_fields_summary}</code>
+        <?php
+        if ( class_exists( 'CVS_Form_Fields' ) ) {
+            $email_custom_fields = CVS_Form_Fields::get_custom_fields();
+            foreach ( $email_custom_fields as $ecf ) {
+                echo '<code>{custom_' . esc_html( $ecf['id'] ) . '}</code> ';
+            }
+        }
+        ?>
+        <p class="description" style="margin-top: 10px;">
+            <?php esc_html_e( 'Use {custom_fields_summary} to include all custom field values. Individual custom fields use {custom_fieldslug} format.', 'campus-visit-scheduler' ); ?>
+        </p>
     </div>
 
     <form method="post" action="options.php">

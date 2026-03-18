@@ -77,6 +77,7 @@ class CVS_Public {
             ),
             'min_group_size' => (int) get_option( 'cvs_min_group_size', 1 ),
             'max_group_size' => (int) get_option( 'cvs_max_group_size', 6 ),
+            'custom_fields'  => CVS_Form_Fields::get_enabled_fields_for_js(),
         ) );
     }
 
@@ -182,6 +183,31 @@ class CVS_Public {
             'year_level'           => isset( $_POST['year_level'] ) ? sanitize_text_field( $_POST['year_level'] ) : '',
             'special_requirements' => isset( $_POST['special_requirements'] ) ? sanitize_textarea_field( $_POST['special_requirements'] ) : '',
         );
+
+        // Collect custom field values
+        $custom_field_values = array();
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing -- nonce already verified above
+        if ( isset( $_POST['cvs_custom_fields'] ) && is_array( $_POST['cvs_custom_fields'] ) ) {
+            $custom_fields = CVS_Form_Fields::get_custom_fields();
+            // phpcs:ignore WordPress.Security.NonceVerification.Missing
+            foreach ( $_POST['cvs_custom_fields'] as $field_id => $raw_value ) {
+                $field_id = sanitize_text_field( $field_id );
+                $field_def = CVS_Form_Fields::get_field( $field_id );
+
+                if ( $field_def && 'custom' === $field_def['type'] ) {
+                    $sanitized = CVS_Form_Fields::sanitize_field_value( $raw_value, $field_def );
+                    $validation = CVS_Form_Fields::validate_field_value( $sanitized, $field_def );
+
+                    if ( true !== $validation ) {
+                        wp_send_json_error( $validation );
+                    }
+
+                    $custom_field_values[ $field_id ] = $sanitized;
+                }
+            }
+        }
+
+        $data['custom_field_values'] = $custom_field_values;
 
         // Create the booking
         $result = CVS_Booking::create_booking( $data );

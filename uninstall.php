@@ -22,6 +22,7 @@ $tables = array(
     $wpdb->prefix . 'cvs_blackout_dates',
     $wpdb->prefix . 'cvs_notification_recipients',
     $wpdb->prefix . 'cvs_exclusion_periods',
+    $wpdb->prefix . 'cvs_booking_custom_fields',
 );
 
 foreach ( $tables as $table ) {
@@ -46,6 +47,7 @@ $options = array(
     'cvs_reminder_days',
     'cvs_reminder_subject',
     'cvs_reminder_body',
+    'cvs_form_fields',
 );
 
 foreach ( $options as $option ) {

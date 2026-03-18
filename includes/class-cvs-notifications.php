@@ -211,6 +211,36 @@ class CVS_Notifications {
             '{admin_url}'           => admin_url( 'admin.php?page=cvs-bookings&action=view&id=' . $booking['id'] ),
         );
 
+        // Add custom field placeholders
+        if ( class_exists( 'CVS_Form_Fields' ) && class_exists( 'CVS_Booking' ) && ! empty( $booking['id'] ) ) {
+            $custom_values = CVS_Booking::get_custom_field_values( $booking['id'] );
+            $custom_fields = CVS_Form_Fields::get_custom_fields();
+            $summary_parts = array();
+
+            foreach ( $custom_fields as $cf ) {
+                $cf_value = isset( $custom_values[ $cf['id'] ] ) ? $custom_values[ $cf['id'] ] : '';
+
+                // Format display value
+                if ( 'checkbox' === $cf['field_type'] ) {
+                    $display = $cf_value ? __( 'Yes', 'campus-visit-scheduler' ) : __( 'No', 'campus-visit-scheduler' );
+                } elseif ( 'select' === $cf['field_type'] && ! empty( $cf['options'] ) ) {
+                    $display = isset( $cf['options'][ $cf_value ] ) ? $cf['options'][ $cf_value ] : $cf_value;
+                } else {
+                    $display = $cf_value;
+                }
+
+                $placeholders[ '{custom_' . $cf['id'] . '}' ] = $display;
+
+                if ( '' !== $cf_value && null !== $cf_value ) {
+                    $summary_parts[] = $cf['label'] . ': ' . $display;
+                }
+            }
+
+            $placeholders['{custom_fields_summary}'] = ! empty( $summary_parts )
+                ? implode( "\n", $summary_parts )
+                : __( 'None', 'campus-visit-scheduler' );
+        }
+
         return str_replace( array_keys( $placeholders ), array_values( $placeholders ), $content );
     }
 

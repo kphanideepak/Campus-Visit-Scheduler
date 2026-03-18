@@ -125,12 +125,26 @@ class CVS_Activator {
             KEY end_date (end_date)
         ) $charset_collate;";
 
+        // Booking custom fields table
+        $table_custom_fields = $wpdb->prefix . 'cvs_booking_custom_fields';
+        $sql_custom_fields = "CREATE TABLE $table_custom_fields (
+            id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+            booking_id bigint(20) unsigned NOT NULL,
+            field_id varchar(100) NOT NULL,
+            field_value text,
+            PRIMARY KEY (id),
+            KEY booking_id (booking_id),
+            KEY field_id (field_id),
+            UNIQUE KEY booking_field (booking_id, field_id)
+        ) $charset_collate;";
+
         require_once ABSPATH . 'wp-admin/includes/upgrade.php';
         dbDelta( $sql_schedules );
         dbDelta( $sql_bookings );
         dbDelta( $sql_blackouts );
         dbDelta( $sql_recipients );
         dbDelta( $sql_exclusions );
+        dbDelta( $sql_custom_fields );
 
         // Store database version
         update_option( 'cvs_db_version', CVS_VERSION );
@@ -168,6 +182,55 @@ class CVS_Activator {
             if ( false === $current_value || ( '' === $current_value && ! is_numeric( $default_value ) ) ) {
                 update_option( $option_name, $default_value );
             }
+        }
+
+        // Initialize form field definitions if they don't exist
+        if ( false === get_option( 'cvs_form_fields' ) ) {
+            $year_levels = class_exists( 'CVS_Helpers' ) ? CVS_Helpers::get_year_levels() : array();
+            unset( $year_levels[''] ); // Remove empty option
+
+            $default_fields = array(
+                array(
+                    'id'          => 'child_name',
+                    'type'        => 'builtin_optional',
+                    'field_type'  => 'text',
+                    'label'       => __( "Child's Name", 'campus-visit-scheduler' ),
+                    'placeholder' => '',
+                    'required'    => false,
+                    'enabled'     => true,
+                    'options'     => array(),
+                    'max_length'  => 255,
+                    'sort_order'  => 10,
+                    'section'     => 'child_info',
+                ),
+                array(
+                    'id'          => 'year_level',
+                    'type'        => 'builtin_optional',
+                    'field_type'  => 'select',
+                    'label'       => __( 'Intended Year Level', 'campus-visit-scheduler' ),
+                    'placeholder' => '',
+                    'required'    => false,
+                    'enabled'     => true,
+                    'options'     => $year_levels,
+                    'max_length'  => 50,
+                    'sort_order'  => 20,
+                    'section'     => 'child_info',
+                ),
+                array(
+                    'id'          => 'special_requirements',
+                    'type'        => 'builtin_optional',
+                    'field_type'  => 'textarea',
+                    'label'       => __( 'Special Requirements or Notes', 'campus-visit-scheduler' ),
+                    'placeholder' => '',
+                    'required'    => false,
+                    'enabled'     => true,
+                    'options'     => array(),
+                    'max_length'  => 1000,
+                    'sort_order'  => 30,
+                    'section'     => 'child_info',
+                ),
+            );
+            update_option( 'cvs_form_fields', $default_fields );
         }
     }
 

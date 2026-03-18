@@ -123,6 +123,36 @@ $year_levels = CVS_Helpers::get_year_levels();
                     </div>
                 <?php endif; ?>
 
+                <?php
+                $custom_field_values = CVS_Booking::get_custom_field_values( $booking['id'] );
+                if ( ! empty( $custom_field_values ) ) :
+                ?>
+                    <div class="cvs-detail-card">
+                        <h2><?php esc_html_e( 'Additional Information', 'campus-visit-scheduler' ); ?></h2>
+                        <table class="form-table">
+                            <?php foreach ( $custom_field_values as $cf_id => $cf_value ) :
+                                $field_def = CVS_Form_Fields::get_field( $cf_id );
+                                $field_label = $field_def ? $field_def['label'] : $cf_id;
+
+                                // Format the display value
+                                $display_value = $cf_value;
+                                if ( $field_def && 'checkbox' === $field_def['field_type'] ) {
+                                    $display_value = $cf_value ? __( 'Yes', 'campus-visit-scheduler' ) : __( 'No', 'campus-visit-scheduler' );
+                                } elseif ( $field_def && 'select' === $field_def['field_type'] && ! empty( $field_def['options'] ) ) {
+                                    $display_value = isset( $field_def['options'][ $cf_value ] ) ? $field_def['options'][ $cf_value ] : $cf_value;
+                                }
+                            ?>
+                                <?php if ( '' !== $cf_value && null !== $cf_value ) : ?>
+                                    <tr>
+                                        <th><?php echo esc_html( $field_label ); ?></th>
+                                        <td><?php echo esc_html( $display_value ); ?></td>
+                                    </tr>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </table>
+                    </div>
+                <?php endif; ?>
+
                 <div class="cvs-detail-card">
                     <h2><?php esc_html_e( 'Admin Notes', 'campus-visit-scheduler' ); ?></h2>
                     <form id="admin-notes-form">
