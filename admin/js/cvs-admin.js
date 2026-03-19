@@ -756,10 +756,82 @@
 
     // ---- Field CRUD ----
 
-    // Show/hide options row based on field type
-    $('#cvs-field-type').on('change', function() {
-        $('#cvs-field-options-row').toggle($(this).val() === 'select');
+    // Sync type grid radio buttons with hidden select
+    function setFieldType(type) {
+        $('#cvs-field-type').val(type);
+        $('input[name="cvs-field-type-radio"][value="' + type + '"]').prop('checked', true);
+        // Show/hide options group
+        $('#cvs-field-options-group').toggle(type === 'select');
+        // Update preview
+        updateFieldPreview();
+    }
+
+    // Type grid click handler
+    $(document).on('change', 'input[name="cvs-field-type-radio"]', function() {
+        setFieldType($(this).val());
     });
+
+    // Legacy hidden select change (backward compat)
+    $('#cvs-field-type').on('change', function() {
+        var type = $(this).val();
+        $('input[name="cvs-field-type-radio"][value="' + type + '"]').prop('checked', true);
+        $('#cvs-field-options-group').toggle(type === 'select');
+        updateFieldPreview();
+    });
+
+    // ---- Live Preview ----
+    function updateFieldPreview() {
+        var label = $('#cvs-field-label').val() || 'Field Label';
+        var type = $('#cvs-field-type').val() || 'text';
+        var placeholder = $('#cvs-field-placeholder').val() || '';
+        var required = $('#cvs-field-required').is(':checked');
+        var options = $('#cvs-field-options').val() || '';
+
+        // Update label
+        $('#cvs-preview-label-text').text(label);
+        $('#cvs-preview-required').toggle(required);
+
+        // Update input type
+        var $wrap = $('#cvs-preview-input-wrap');
+        var html = '';
+
+        switch (type) {
+            case 'textarea':
+                html = '<textarea class="cvs-preview-textarea" disabled placeholder="' + $('<span>').text(placeholder).html() + '"></textarea>';
+                break;
+            case 'select':
+                html = '<select class="cvs-preview-select" disabled>';
+                html += '<option>' + (placeholder || 'Select...') + '</option>';
+                if (options) {
+                    options.split('\n').forEach(function(opt) {
+                        opt = opt.trim();
+                        if (opt) {
+                            var parts = opt.split('|');
+                            var optLabel = parts.length > 1 ? parts[1].trim() : opt;
+                            html += '<option>' + $('<span>').text(optLabel).html() + '</option>';
+                        }
+                    });
+                }
+                html += '</select>';
+                break;
+            case 'checkbox':
+                html = '<div class="cvs-preview-checkbox-wrap"><input type="checkbox" disabled> <span>' + $('<span>').text(label).html() + '</span></div>';
+                break;
+            case 'number':
+                html = '<input type="number" class="cvs-preview-input" disabled placeholder="' + $('<span>').text(placeholder || '0').html() + '">';
+                break;
+            case 'text':
+            default:
+                html = '<input type="text" class="cvs-preview-input" disabled placeholder="' + $('<span>').text(placeholder).html() + '">';
+                break;
+        }
+
+        $wrap.html(html);
+    }
+
+    // Bind preview updates to field inputs
+    $('#cvs-field-label, #cvs-field-placeholder, #cvs-field-options').on('input', updateFieldPreview);
+    $('#cvs-field-required').on('change', updateFieldPreview);
 
     // Add Field button (in section footer)
     $(document).on('click', '.cvs-add-field-btn', function() {
@@ -768,7 +840,7 @@
         $('#cvs-field-section').val(sectionId);
         $('#cvs-field-type-key').val('');
         $('#cvs-field-label').val('');
-        $('#cvs-field-type').val('text').trigger('change');
+        setFieldType('text');
         $('#cvs-field-required').prop('checked', false);
         $('#cvs-field-placeholder').val('');
         $('#cvs-field-max-length').val('255');
@@ -777,6 +849,7 @@
         $('#cvs-field-type-row').show();
         $('#cvs-field-modal-title').text('Add Field');
         $('#cvs-field-submit-btn').text('Add Field');
+        updateFieldPreview();
         openModal('cvs-field-modal');
     });
 
@@ -789,7 +862,7 @@
         $('#cvs-field-section').val($btn.data('section'));
         $('#cvs-field-type-key').val($btn.data('field-type-key'));
         $('#cvs-field-label').val($btn.data('label'));
-        $('#cvs-field-type').val($btn.data('field-type')).trigger('change');
+        setFieldType($btn.data('field-type'));
         $('#cvs-field-required').prop('checked', $btn.data('required') == 1);
         $('#cvs-field-placeholder').val($btn.data('placeholder'));
         $('#cvs-field-max-length').val($btn.data('max-length'));
@@ -805,6 +878,7 @@
 
         $('#cvs-field-modal-title').text('Edit Field');
         $('#cvs-field-submit-btn').text('Update Field');
+        updateFieldPreview();
         openModal('cvs-field-modal');
     });
 

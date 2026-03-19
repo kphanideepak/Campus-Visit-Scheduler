@@ -180,10 +180,10 @@ foreach ( $all_fields as $field ) {
     </div>
 </div>
 
-<!-- Field Modal -->
+<!-- Field Modal (Polished with Live Preview) -->
 <div id="cvs-field-modal" class="cvs-modal" style="display: none;">
     <div class="cvs-modal-overlay"></div>
-    <div class="cvs-modal-content">
+    <div class="cvs-modal-content cvs-modal-wide">
         <div class="cvs-modal-header">
             <h3 id="cvs-field-modal-title"><?php esc_html_e( 'Add Field', 'campus-visit-scheduler' ); ?></h3>
             <button type="button" class="cvs-modal-close">&times;</button>
@@ -192,83 +192,104 @@ foreach ( $all_fields as $field ) {
             <input type="hidden" id="cvs-field-edit-id" value="">
             <input type="hidden" id="cvs-field-section" value="">
             <input type="hidden" id="cvs-field-type-key" value="">
-            <table class="form-table">
-                <tr>
-                    <th scope="row">
-                        <label for="cvs-field-label"><?php esc_html_e( 'Label', 'campus-visit-scheduler' ); ?> <span class="required">*</span></label>
-                    </th>
-                    <td>
-                        <input type="text" id="cvs-field-label" class="regular-text" required>
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row">
-                        <label for="cvs-field-section-select"><?php esc_html_e( 'Section', 'campus-visit-scheduler' ); ?></label>
-                    </th>
-                    <td>
-                        <select id="cvs-field-section-select">
-                            <?php foreach ( $sections as $section ) : ?>
-                                <option value="<?php echo esc_attr( $section['id'] ); ?>"><?php echo esc_html( $section['label'] ); ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </td>
-                </tr>
-                <tr id="cvs-field-type-row">
-                    <th scope="row">
-                        <label for="cvs-field-type"><?php esc_html_e( 'Field Type', 'campus-visit-scheduler' ); ?></label>
-                    </th>
-                    <td>
-                        <select id="cvs-field-type">
-                            <?php foreach ( $field_types as $type_value => $type_label ) : ?>
-                                <option value="<?php echo esc_attr( $type_value ); ?>"><?php echo esc_html( $type_label ); ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row">
-                        <label for="cvs-field-required"><?php esc_html_e( 'Required', 'campus-visit-scheduler' ); ?></label>
-                    </th>
-                    <td>
-                        <label>
-                            <input type="checkbox" id="cvs-field-required">
-                            <?php esc_html_e( 'This field is required', 'campus-visit-scheduler' ); ?>
-                        </label>
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row">
-                        <label for="cvs-field-placeholder"><?php esc_html_e( 'Placeholder', 'campus-visit-scheduler' ); ?></label>
-                    </th>
-                    <td>
-                        <input type="text" id="cvs-field-placeholder" class="regular-text">
-                    </td>
-                </tr>
-                <tr>
-                    <th scope="row">
-                        <label for="cvs-field-max-length"><?php esc_html_e( 'Max Length', 'campus-visit-scheduler' ); ?></label>
-                    </th>
-                    <td>
-                        <input type="number" id="cvs-field-max-length" value="255" min="1" max="10000" class="small-text">
-                    </td>
-                </tr>
-                <tr id="cvs-field-options-row" style="display: none;">
-                    <th scope="row">
-                        <label for="cvs-field-options"><?php esc_html_e( 'Options', 'campus-visit-scheduler' ); ?></label>
-                    </th>
-                    <td>
-                        <textarea id="cvs-field-options" rows="5" class="large-text"></textarea>
-                        <p class="description">
-                            <?php esc_html_e( 'One option per line. Use "value|Label" format or just "Label" (label becomes value).', 'campus-visit-scheduler' ); ?>
-                        </p>
-                    </td>
-                </tr>
-            </table>
+
+            <div class="cvs-modal-split">
+                <!-- Left: Field Settings -->
+                <div class="cvs-modal-settings">
+                    <div class="cvs-field-group">
+                        <div class="cvs-field-group-title"><?php esc_html_e( 'Basic', 'campus-visit-scheduler' ); ?></div>
+                        <div class="cvs-field-row">
+                            <label for="cvs-field-label" class="cvs-field-row-label"><?php esc_html_e( 'Label', 'campus-visit-scheduler' ); ?> <span class="required">*</span></label>
+                            <input type="text" id="cvs-field-label" class="cvs-field-input" required placeholder="<?php esc_attr_e( 'e.g. Dietary Requirements', 'campus-visit-scheduler' ); ?>">
+                        </div>
+                        <div class="cvs-field-row" id="cvs-field-type-row">
+                            <label for="cvs-field-type" class="cvs-field-row-label"><?php esc_html_e( 'Type', 'campus-visit-scheduler' ); ?></label>
+                            <div class="cvs-field-type-grid">
+                                <?php
+                                $type_icons = array(
+                                    'text'     => 'Aa',
+                                    'textarea' => '&#9776;',
+                                    'select'   => '&#9662;',
+                                    'checkbox' => '&#9745;',
+                                    'number'   => '#',
+                                );
+                                foreach ( $field_types as $type_value => $type_label ) :
+                                ?>
+                                    <label class="cvs-type-option" data-type="<?php echo esc_attr( $type_value ); ?>">
+                                        <input type="radio" name="cvs-field-type-radio" value="<?php echo esc_attr( $type_value ); ?>" <?php checked( 'text', $type_value ); ?>>
+                                        <span class="cvs-type-icon"><?php echo isset( $type_icons[ $type_value ] ) ? $type_icons[ $type_value ] : ''; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
+                                        <span class="cvs-type-name"><?php echo esc_html( $type_label ); ?></span>
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+                            <!-- Hidden select for backward compatibility -->
+                            <select id="cvs-field-type" style="display:none;">
+                                <?php foreach ( $field_types as $type_value => $type_label ) : ?>
+                                    <option value="<?php echo esc_attr( $type_value ); ?>"><?php echo esc_html( $type_label ); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="cvs-field-row">
+                            <label for="cvs-field-section-select" class="cvs-field-row-label"><?php esc_html_e( 'Section', 'campus-visit-scheduler' ); ?></label>
+                            <select id="cvs-field-section-select" class="cvs-field-input">
+                                <?php foreach ( $sections as $section ) : ?>
+                                    <option value="<?php echo esc_attr( $section['id'] ); ?>"><?php echo esc_html( $section['label'] ); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="cvs-field-group">
+                        <div class="cvs-field-group-title"><?php esc_html_e( 'Behaviour', 'campus-visit-scheduler' ); ?></div>
+                        <div class="cvs-field-row cvs-field-row-inline">
+                            <label class="cvs-toggle-modern">
+                                <input type="checkbox" id="cvs-field-required">
+                                <span class="cvs-toggle-slider"></span>
+                            </label>
+                            <span class="cvs-field-row-label-inline"><?php esc_html_e( 'Required field', 'campus-visit-scheduler' ); ?></span>
+                        </div>
+                        <div class="cvs-field-row">
+                            <label for="cvs-field-placeholder" class="cvs-field-row-label"><?php esc_html_e( 'Placeholder', 'campus-visit-scheduler' ); ?></label>
+                            <input type="text" id="cvs-field-placeholder" class="cvs-field-input" placeholder="<?php esc_attr_e( 'Hint text shown in empty field', 'campus-visit-scheduler' ); ?>">
+                        </div>
+                        <div class="cvs-field-row">
+                            <label for="cvs-field-max-length" class="cvs-field-row-label"><?php esc_html_e( 'Max Length', 'campus-visit-scheduler' ); ?></label>
+                            <input type="number" id="cvs-field-max-length" value="255" min="1" max="10000" class="cvs-field-input cvs-field-input-short">
+                        </div>
+                    </div>
+
+                    <div class="cvs-field-group" id="cvs-field-options-group" style="display: none;">
+                        <div class="cvs-field-group-title"><?php esc_html_e( 'Dropdown Options', 'campus-visit-scheduler' ); ?></div>
+                        <div class="cvs-field-row">
+                            <textarea id="cvs-field-options" rows="4" class="cvs-field-input cvs-field-textarea" placeholder="<?php esc_attr_e( "Option 1\nOption 2\nOption 3", 'campus-visit-scheduler' ); ?>"></textarea>
+                            <p class="cvs-field-hint"><?php esc_html_e( 'One per line. Use "value|Label" for custom values.', 'campus-visit-scheduler' ); ?></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Live Preview -->
+                <div class="cvs-modal-preview">
+                    <div class="cvs-preview-label"><?php esc_html_e( 'Preview', 'campus-visit-scheduler' ); ?></div>
+                    <div class="cvs-preview-card">
+                        <div id="cvs-field-preview" class="cvs-preview-field">
+                            <label class="cvs-preview-field-label">
+                                <span id="cvs-preview-label-text"><?php esc_html_e( 'Field Label', 'campus-visit-scheduler' ); ?></span>
+                                <span id="cvs-preview-required" class="cvs-preview-required" style="display:none;"> *</span>
+                            </label>
+                            <div id="cvs-preview-input-wrap">
+                                <input type="text" id="cvs-preview-input" class="cvs-preview-input" disabled placeholder="">
+                            </div>
+                        </div>
+                    </div>
+                    <p class="cvs-preview-note"><?php esc_html_e( 'This is how the field will appear on the booking form.', 'campus-visit-scheduler' ); ?></p>
+                </div>
+            </div>
+
             <div class="cvs-modal-footer">
-                <button type="submit" id="cvs-field-submit-btn" class="button button-primary">
+                <button type="button" class="button cvs-modal-cancel"><?php esc_html_e( 'Cancel', 'campus-visit-scheduler' ); ?></button>
+                <button type="submit" id="cvs-field-submit-btn" class="button button-primary button-hero-sm">
                     <?php esc_html_e( 'Add Field', 'campus-visit-scheduler' ); ?>
                 </button>
-                <button type="button" class="button cvs-modal-cancel"><?php esc_html_e( 'Cancel', 'campus-visit-scheduler' ); ?></button>
             </div>
         </form>
     </div>
