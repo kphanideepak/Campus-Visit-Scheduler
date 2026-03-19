@@ -31,7 +31,7 @@ foreach ( $all_fields as $field ) {
 <div class="cvs-form-builder-wrap">
     <h2><?php esc_html_e( 'Form Builder', 'campus-visit-scheduler' ); ?></h2>
     <p class="description">
-        <?php esc_html_e( 'Drag sections and fields to reorder. Core fields (date, time, group size, name, email, phone) are always shown and cannot be moved here.', 'campus-visit-scheduler' ); ?>
+        <?php esc_html_e( 'All form sections are shown below. Core sections (locked) contain built-in fields that are always shown. You can add custom fields to any section, and drag to reorder custom sections.', 'campus-visit-scheduler' ); ?>
     </p>
 
     <div class="cvs-form-builder-status" id="cvs-builder-status" style="display: none;">
@@ -40,47 +40,78 @@ foreach ( $all_fields as $field ) {
 
     <!-- Visual Form Builder -->
     <div id="cvs-sections-list" class="cvs-sections-list">
-        <?php foreach ( $sections as $section ) : ?>
-            <div class="cvs-section-card" data-section-id="<?php echo esc_attr( $section['id'] ); ?>" data-section-type="<?php echo esc_attr( $section['type'] ); ?>">
+        <?php foreach ( $sections as $section ) :
+            $is_core = ( 'core' === $section['type'] );
+            $custom_fields_in_section = isset( $fields_by_section[ $section['id'] ] ) ? $fields_by_section[ $section['id'] ] : array();
+        ?>
+            <div class="cvs-section-card <?php echo $is_core ? 'cvs-section-core' : ''; ?>" data-section-id="<?php echo esc_attr( $section['id'] ); ?>" data-section-type="<?php echo esc_attr( $section['type'] ); ?>">
                 <div class="cvs-section-header">
-                    <span class="cvs-drag-handle cvs-section-drag" title="<?php esc_attr_e( 'Drag to reorder section', 'campus-visit-scheduler' ); ?>">&#9776;</span>
+                    <?php if ( $is_core ) : ?>
+                        <span class="cvs-section-lock dashicons dashicons-lock" title="<?php esc_attr_e( 'Core section — cannot be moved or deleted', 'campus-visit-scheduler' ); ?>"></span>
+                    <?php else : ?>
+                        <span class="cvs-drag-handle cvs-section-drag" title="<?php esc_attr_e( 'Drag to reorder section', 'campus-visit-scheduler' ); ?>">&#9776;</span>
+                    <?php endif; ?>
                     <div class="cvs-section-title-wrap">
                         <h3 class="cvs-section-title"><?php echo esc_html( $section['label'] ); ?></h3>
                         <?php if ( ! empty( $section['description'] ) ) : ?>
                             <span class="cvs-section-desc"><?php echo esc_html( $section['description'] ); ?></span>
                         <?php endif; ?>
                     </div>
-                    <span class="cvs-section-field-count">
-                        <?php
-                        $count = count( $fields_by_section[ $section['id'] ] );
-                        printf(
-                            /* translators: %d: number of fields */
-                            esc_html( _n( '%d field', '%d fields', $count, 'campus-visit-scheduler' ) ),
-                            esc_html( $count )
-                        );
-                        ?>
-                    </span>
-                    <span class="cvs-section-actions">
-                        <button type="button" class="button button-small cvs-edit-section"
-                                data-section-id="<?php echo esc_attr( $section['id'] ); ?>"
-                                data-label="<?php echo esc_attr( $section['label'] ); ?>"
-                                data-description="<?php echo esc_attr( $section['description'] ); ?>"
-                                title="<?php esc_attr_e( 'Edit Section', 'campus-visit-scheduler' ); ?>">
-                            <span class="dashicons dashicons-edit" style="font-size: 14px; line-height: 26px; width: 14px; height: 14px;"></span>
-                        </button>
-                        <?php if ( 'custom' === $section['type'] ) : ?>
-                            <button type="button" class="button button-small button-link-delete cvs-delete-section"
+                    <?php if ( $is_core ) : ?>
+                        <span class="cvs-section-core-badge"><?php esc_html_e( 'Core', 'campus-visit-scheduler' ); ?></span>
+                    <?php endif; ?>
+                    <?php if ( ! empty( $custom_fields_in_section ) ) : ?>
+                        <span class="cvs-section-field-count">
+                            <?php
+                            $count = count( $custom_fields_in_section );
+                            printf(
+                                /* translators: %d: number of custom fields */
+                                esc_html( _n( '+%d custom field', '+%d custom fields', $count, 'campus-visit-scheduler' ) ),
+                                esc_html( $count )
+                            );
+                            ?>
+                        </span>
+                    <?php elseif ( ! $is_core ) : ?>
+                        <span class="cvs-section-field-count">
+                            <?php
+                            $count = count( $custom_fields_in_section );
+                            printf(
+                                /* translators: %d: number of fields */
+                                esc_html( _n( '%d field', '%d fields', $count, 'campus-visit-scheduler' ) ),
+                                esc_html( $count )
+                            );
+                            ?>
+                        </span>
+                    <?php endif; ?>
+                    <?php if ( ! $is_core ) : ?>
+                        <span class="cvs-section-actions">
+                            <button type="button" class="button button-small cvs-edit-section"
                                     data-section-id="<?php echo esc_attr( $section['id'] ); ?>"
-                                    title="<?php esc_attr_e( 'Delete Section', 'campus-visit-scheduler' ); ?>">
-                                <span class="dashicons dashicons-trash" style="font-size: 14px; line-height: 26px; width: 14px; height: 14px;"></span>
+                                    data-label="<?php echo esc_attr( $section['label'] ); ?>"
+                                    data-description="<?php echo esc_attr( $section['description'] ); ?>"
+                                    title="<?php esc_attr_e( 'Edit Section', 'campus-visit-scheduler' ); ?>">
+                                <span class="dashicons dashicons-edit" style="font-size: 14px; line-height: 26px; width: 14px; height: 14px;"></span>
                             </button>
-                        <?php endif; ?>
-                    </span>
+                            <?php if ( 'custom' === $section['type'] ) : ?>
+                                <button type="button" class="button button-small button-link-delete cvs-delete-section"
+                                        data-section-id="<?php echo esc_attr( $section['id'] ); ?>"
+                                        title="<?php esc_attr_e( 'Delete Section', 'campus-visit-scheduler' ); ?>">
+                                    <span class="dashicons dashicons-trash" style="font-size: 14px; line-height: 26px; width: 14px; height: 14px;"></span>
+                                </button>
+                            <?php endif; ?>
+                        </span>
+                    <?php endif; ?>
                 </div>
 
+                <?php if ( $is_core ) : ?>
+                    <div class="cvs-core-fields-info">
+                        <?php esc_html_e( 'Built-in fields are always shown on the booking form.', 'campus-visit-scheduler' ); ?>
+                    </div>
+                <?php endif; ?>
+
                 <div class="cvs-fields-list" data-section-id="<?php echo esc_attr( $section['id'] ); ?>">
-                    <?php if ( ! empty( $fields_by_section[ $section['id'] ] ) ) : ?>
-                        <?php foreach ( $fields_by_section[ $section['id'] ] as $field ) : ?>
+                    <?php if ( ! empty( $custom_fields_in_section ) ) : ?>
+                        <?php foreach ( $custom_fields_in_section as $field ) : ?>
                             <div class="cvs-field-item <?php echo empty( $field['enabled'] ) ? 'cvs-field-disabled' : ''; ?>"
                                  data-field-id="<?php echo esc_attr( $field['id'] ); ?>"
                                  data-field-type-key="<?php echo esc_attr( $field['type'] ); ?>">
@@ -122,8 +153,14 @@ foreach ( $all_fields as $field ) {
                             </div>
                         <?php endforeach; ?>
                     <?php endif; ?>
-                    <div class="cvs-fields-empty-state" <?php echo ! empty( $fields_by_section[ $section['id'] ] ) ? 'style="display:none;"' : ''; ?>>
-                        <?php esc_html_e( 'Drag fields here or add a new field', 'campus-visit-scheduler' ); ?>
+                    <div class="cvs-fields-empty-state" <?php echo ! empty( $custom_fields_in_section ) ? 'style="display:none;"' : ''; ?>>
+                        <?php
+                        if ( $is_core ) {
+                            esc_html_e( 'Add custom fields to extend this section', 'campus-visit-scheduler' );
+                        } else {
+                            esc_html_e( 'Drag fields here or add a new field', 'campus-visit-scheduler' );
+                        }
+                        ?>
                     </div>
                 </div>
 

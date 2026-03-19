@@ -34,6 +34,22 @@ class CVS_Form_Sections {
             // Auto-initialize defaults if not set
             $sections = self::get_default_sections();
             update_option( self::OPTION_KEY, $sections );
+        } else {
+            // Auto-merge core sections if missing (migration from older versions).
+            $existing_ids = wp_list_pluck( $sections, 'id' );
+            $defaults     = self::get_default_sections();
+            $updated      = false;
+
+            foreach ( $defaults as $default ) {
+                if ( 'core' === $default['type'] && ! in_array( $default['id'], $existing_ids, true ) ) {
+                    $sections[] = $default;
+                    $updated    = true;
+                }
+            }
+
+            if ( $updated ) {
+                update_option( self::OPTION_KEY, $sections );
+            }
         }
 
         usort( $sections, function( $a, $b ) {
@@ -147,6 +163,11 @@ class CVS_Form_Sections {
             if ( $section['id'] === $id ) {
                 $found = true;
 
+                // Core sections cannot be renamed.
+                if ( 'core' === $section['type'] ) {
+                    return new WP_Error( 'cannot_edit_core', __( 'Core sections cannot be edited.', 'campus-visit-scheduler' ) );
+                }
+
                 if ( isset( $data['label'] ) ) {
                     $section['label'] = sanitize_text_field( $data['label'] );
                 }
@@ -183,7 +204,7 @@ class CVS_Form_Sections {
             if ( $section['id'] === $id ) {
                 $found = true;
 
-                if ( 'builtin' === $section['type'] ) {
+                if ( in_array( $section['type'], array( 'builtin', 'core' ), true ) ) {
                     return new WP_Error( 'cannot_delete', __( 'Built-in sections cannot be deleted.', 'campus-visit-scheduler' ) );
                 }
 
@@ -222,9 +243,15 @@ class CVS_Form_Sections {
         $sections = self::get_sections();
 
         foreach ( $sections as &$section ) {
+            // Core sections keep their fixed sort_order and cannot be reordered.
+            if ( 'core' === $section['type'] ) {
+                continue;
+            }
+
             $index = array_search( $section['id'], $section_order, true );
             if ( false !== $index ) {
-                $section['sort_order'] = ( $index + 1 ) * 10;
+                // Offset by 100 so custom/builtin sections always sort after core.
+                $section['sort_order'] = 100 + ( $index + 1 ) * 10;
             }
         }
         unset( $section );
@@ -241,6 +268,27 @@ class CVS_Form_Sections {
      */
     public static function get_default_sections() {
         return array(
+            array(
+                'id'          => 'date_time',
+                'label'       => __( 'Select Tour Date & Time', 'campus-visit-scheduler' ),
+                'description' => '',
+                'sort_order'  => 1,
+                'type'        => 'core',
+            ),
+            array(
+                'id'          => 'group_size',
+                'label'       => __( 'Group Size', 'campus-visit-scheduler' ),
+                'description' => '',
+                'sort_order'  => 2,
+                'type'        => 'core',
+            ),
+            array(
+                'id'          => 'your_details',
+                'label'       => __( 'Your Details', 'campus-visit-scheduler' ),
+                'description' => '',
+                'sort_order'  => 3,
+                'type'        => 'core',
+            ),
             array(
                 'id'          => 'child_info',
                 'label'       => __( 'Child Information (Optional)', 'campus-visit-scheduler' ),

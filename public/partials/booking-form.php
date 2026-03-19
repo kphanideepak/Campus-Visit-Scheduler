@@ -12,6 +12,20 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $year_levels = CVS_Helpers::get_year_levels();
 $max_group_size = (int) get_option( 'cvs_max_group_size', 6 );
+
+// Get enabled custom fields grouped by section for core section injection.
+$all_enabled_fields    = CVS_Form_Fields::get_enabled_fields();
+$core_section_fields   = array(
+    'date_time'    => array(),
+    'group_size'   => array(),
+    'your_details' => array(),
+);
+foreach ( $all_enabled_fields as $f ) {
+    $sec = isset( $f['section'] ) ? $f['section'] : 'additional';
+    if ( isset( $core_section_fields[ $sec ] ) ) {
+        $core_section_fields[ $sec ][] = $f;
+    }
+}
 ?>
 
 <div class="cvs-booking-wrapper">
@@ -54,6 +68,9 @@ $max_group_size = (int) get_option( 'cvs_max_group_size', 6 );
                     <input type="hidden" id="cvs-tour-time" name="tour_time" required>
                 </div>
             </div>
+            <?php foreach ( $core_section_fields['date_time'] as $field ) : ?>
+                <?php CVS_Form_Fields::render_field( $field ); ?>
+            <?php endforeach; ?>
         </div>
 
         <div class="cvs-form-section">
@@ -92,6 +109,9 @@ $max_group_size = (int) get_option( 'cvs_max_group_size', 6 );
                     </p>
                 </div>
             </div>
+            <?php foreach ( $core_section_fields['group_size'] as $field ) : ?>
+                <?php CVS_Form_Fields::render_field( $field ); ?>
+            <?php endforeach; ?>
         </div>
 
         <div class="cvs-form-section">
@@ -115,6 +135,9 @@ $max_group_size = (int) get_option( 'cvs_max_group_size', 6 );
                     <input type="tel" id="cvs-phone" name="phone" required maxlength="50">
                 </div>
             </div>
+            <?php foreach ( $core_section_fields['your_details'] as $field ) : ?>
+                <?php CVS_Form_Fields::render_field( $field ); ?>
+            <?php endforeach; ?>
         </div>
 
         <?php
@@ -123,6 +146,11 @@ $max_group_size = (int) get_option( 'cvs_max_group_size', 6 );
             $sections = CVS_Form_Sections::get_sections();
 
             foreach ( $sections as $section ) :
+                // Skip core sections — their custom fields are already rendered inline above.
+                if ( 'core' === $section['type'] ) :
+                    continue;
+                endif;
+
                 $section_fields = array_filter( $enabled_fields, function( $f ) use ( $section ) {
                     $field_section = isset( $f['section'] ) ? $f['section'] : 'additional';
                     return $field_section === $section['id'];

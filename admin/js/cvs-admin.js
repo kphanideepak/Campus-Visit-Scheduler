@@ -520,18 +520,19 @@
 
     // Initialize SortableJS if builder exists on page
     if ($sectionsList && typeof Sortable !== 'undefined') {
-        // Section-level sortable
+        // Section-level sortable — only non-core sections can be dragged
         new Sortable($sectionsList, {
             handle: '.cvs-section-drag',
             animation: 150,
             ghostClass: 'sortable-ghost',
             chosenClass: 'sortable-chosen',
+            filter: '.cvs-section-core',
             onEnd: function() {
                 saveFormLayout();
             }
         });
 
-        // Field-level sortable for each section
+        // Field-level sortable for each section (including core — custom fields can be added)
         $sectionsList.querySelectorAll('.cvs-fields-list').forEach(function(list) {
             new Sortable(list, {
                 group: 'fields',
