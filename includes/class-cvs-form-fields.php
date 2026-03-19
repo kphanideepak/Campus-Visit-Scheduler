@@ -150,7 +150,7 @@ class CVS_Form_Fields {
             'options'     => $options,
             'max_length'  => isset( $data['max_length'] ) ? absint( $data['max_length'] ) : 255,
             'sort_order'  => $max_sort + 10,
-            'section'     => 'additional',
+            'section'     => isset( $data['section'] ) ? sanitize_text_field( $data['section'] ) : 'additional',
         );
 
         $fields[] = $new_field;
@@ -202,6 +202,9 @@ class CVS_Form_Fields {
                 }
                 if ( isset( $data['max_length'] ) ) {
                     $field['max_length'] = absint( $data['max_length'] );
+                }
+                if ( isset( $data['section'] ) ) {
+                    $field['section'] = sanitize_text_field( $data['section'] );
                 }
 
                 break;
@@ -514,6 +517,44 @@ class CVS_Form_Fields {
         }
 
         return $options;
+    }
+
+    /**
+     * Get fields belonging to a specific section
+     *
+     * @param string $section_id Section ID.
+     * @return array Array of field definitions in that section.
+     */
+    public static function get_fields_by_section( $section_id ) {
+        return array_values( array_filter( self::get_fields(), function( $field ) use ( $section_id ) {
+            return isset( $field['section'] ) && $field['section'] === $section_id;
+        }));
+    }
+
+    /**
+     * Bulk save field order and section assignments from drag-and-drop layout
+     *
+     * @param array $layout Associative array: section_id => array of [ 'id' => field_id, 'sort_order' => int ].
+     * @return bool True on success.
+     */
+    public static function save_layout( $layout ) {
+        $fields = self::get_fields();
+
+        foreach ( $fields as &$field ) {
+            foreach ( $layout as $section_id => $field_orders ) {
+                foreach ( $field_orders as $order_data ) {
+                    if ( $field['id'] === $order_data['id'] ) {
+                        $field['section']    = sanitize_text_field( $section_id );
+                        $field['sort_order'] = (int) $order_data['sort_order'];
+                    }
+                }
+            }
+        }
+        unset( $field );
+
+        update_option( self::OPTION_KEY, $fields );
+
+        return true;
     }
 
     /**

@@ -66,6 +66,7 @@ require_once CVS_PLUGIN_DIR . 'includes/class-cvs-helpers.php';
 require_once CVS_PLUGIN_DIR . 'includes/class-cvs-booking.php';
 require_once CVS_PLUGIN_DIR . 'includes/class-cvs-notifications.php';
 require_once CVS_PLUGIN_DIR . 'includes/class-cvs-form-fields.php';
+require_once CVS_PLUGIN_DIR . 'includes/class-cvs-form-sections.php';
 
 // Load admin functionality
 if ( is_admin() ) {

@@ -120,32 +120,31 @@ $max_group_size = (int) get_option( 'cvs_max_group_size', 6 );
         <?php
         $enabled_fields = CVS_Form_Fields::get_enabled_fields();
         if ( ! empty( $enabled_fields ) ) :
-            // Group fields by section
-            $child_info_fields = array_filter( $enabled_fields, function( $f ) {
-                return isset( $f['section'] ) && 'child_info' === $f['section'];
-            });
-            $additional_fields = array_filter( $enabled_fields, function( $f ) {
-                return ! isset( $f['section'] ) || 'additional' === $f['section'];
-            });
-        ?>
-            <?php if ( ! empty( $child_info_fields ) ) : ?>
-                <div class="cvs-form-section">
-                    <h3><?php esc_html_e( 'Child Information (Optional)', 'campus-visit-scheduler' ); ?></h3>
-                    <?php foreach ( $child_info_fields as $field ) : ?>
-                        <?php CVS_Form_Fields::render_field( $field ); ?>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
+            $sections = CVS_Form_Sections::get_sections();
 
-            <?php if ( ! empty( $additional_fields ) ) : ?>
+            foreach ( $sections as $section ) :
+                $section_fields = array_filter( $enabled_fields, function( $f ) use ( $section ) {
+                    $field_section = isset( $f['section'] ) ? $f['section'] : 'additional';
+                    return $field_section === $section['id'];
+                });
+
+                if ( empty( $section_fields ) ) :
+                    continue;
+                endif;
+        ?>
                 <div class="cvs-form-section">
-                    <h3><?php esc_html_e( 'Additional Information', 'campus-visit-scheduler' ); ?></h3>
-                    <?php foreach ( $additional_fields as $field ) : ?>
+                    <h3><?php echo esc_html( $section['label'] ); ?></h3>
+                    <?php if ( ! empty( $section['description'] ) ) : ?>
+                        <p class="cvs-section-description"><?php echo esc_html( $section['description'] ); ?></p>
+                    <?php endif; ?>
+                    <?php foreach ( $section_fields as $field ) : ?>
                         <?php CVS_Form_Fields::render_field( $field ); ?>
                     <?php endforeach; ?>
                 </div>
-            <?php endif; ?>
-        <?php endif; ?>
+        <?php
+            endforeach;
+        endif;
+        ?>
 
         <div class="cvs-form-actions">
             <button type="submit" id="cvs-submit-booking" class="cvs-btn cvs-btn-primary">

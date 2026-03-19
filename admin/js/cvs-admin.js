@@ -512,91 +512,333 @@
     });
 
     // ==============================================
-    // Form Fields Settings Tab
+    // Visual Form Builder
     // ==============================================
 
-    // Toggle built-in field enabled/disabled
-    $(document).on('change', '.cvs-toggle-builtin-field', function() {
-        var $checkbox = $(this);
-        var fieldId = $checkbox.data('field-id');
-        var enabled = $checkbox.is(':checked') ? '1' : '0';
-        var $label = $checkbox.siblings('.cvs-toggle-label');
+    var $sectionsList = document.getElementById('cvs-sections-list');
+    var saveTimeout = null;
+
+    // Initialize SortableJS if builder exists on page
+    if ($sectionsList && typeof Sortable !== 'undefined') {
+        // Section-level sortable
+        new Sortable($sectionsList, {
+            handle: '.cvs-section-drag',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            onEnd: function() {
+                saveFormLayout();
+            }
+        });
+
+        // Field-level sortable for each section
+        $sectionsList.querySelectorAll('.cvs-fields-list').forEach(function(list) {
+            new Sortable(list, {
+                group: 'fields',
+                handle: '.cvs-field-drag',
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                onEnd: function() {
+                    updateEmptyStates();
+                    updateFieldCounts();
+                    saveFormLayout();
+                }
+            });
+        });
+    }
+
+    // Show status message
+    function showBuilderStatus(text, type) {
+        var $status = $('#cvs-builder-status');
+        $status.find('.cvs-status-text').text(text);
+        $status.removeClass('saving saved error').addClass(type).show();
+
+        if (type === 'saved') {
+            setTimeout(function() { $status.fadeOut(); }, 2000);
+        }
+    }
+
+    // Update empty state visibility for all sections
+    function updateEmptyStates() {
+        $('.cvs-fields-list').each(function() {
+            var $list = $(this);
+            var hasFields = $list.find('.cvs-field-item').length > 0;
+            $list.find('.cvs-fields-empty-state').toggle(!hasFields);
+        });
+    }
+
+    // Update field counts in section headers
+    function updateFieldCounts() {
+        $('.cvs-section-card').each(function() {
+            var count = $(this).find('.cvs-field-item').length;
+            var text = count === 1 ? '1 field' : count + ' fields';
+            $(this).find('.cvs-section-field-count').text(text);
+        });
+    }
+
+    // Save entire layout via AJAX (debounced)
+    function saveFormLayout() {
+        if (saveTimeout) clearTimeout(saveTimeout);
+
+        saveTimeout = setTimeout(function() {
+            var layout = { sections: [], fields: {} };
+
+            document.querySelectorAll('.cvs-section-card').forEach(function(card, idx) {
+                var sectionId = card.dataset.sectionId;
+                layout.sections.push({ id: sectionId, sort_order: (idx + 1) * 10 });
+                layout.fields[sectionId] = [];
+
+                card.querySelectorAll('.cvs-field-item').forEach(function(item, fIdx) {
+                    layout.fields[sectionId].push({
+                        id: item.dataset.fieldId,
+                        sort_order: (fIdx + 1) * 10
+                    });
+                });
+            });
+
+            showBuilderStatus('Saving layout...', 'saving');
+
+            $.ajax({
+                url: cvs_admin.ajax_url,
+                type: 'POST',
+                data: {
+                    action: 'cvs_save_form_layout',
+                    nonce: cvs_admin.nonce,
+                    layout: JSON.stringify(layout)
+                },
+                success: function(response) {
+                    if (response.success) {
+                        showBuilderStatus('Layout saved', 'saved');
+                    } else {
+                        showBuilderStatus('Error saving layout', 'error');
+                    }
+                },
+                error: function() {
+                    showBuilderStatus('Error saving layout', 'error');
+                }
+            });
+        }, 500);
+    }
+
+    // Initialize sortable on a new field list (after adding section)
+    function initFieldSortable(listEl) {
+        if (typeof Sortable !== 'undefined') {
+            new Sortable(listEl, {
+                group: 'fields',
+                handle: '.cvs-field-drag',
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                onEnd: function() {
+                    updateEmptyStates();
+                    updateFieldCounts();
+                    saveFormLayout();
+                }
+            });
+        }
+    }
+
+    // ---- Modal Helpers ----
+    function openModal(modalId) {
+        $('#' + modalId).show();
+    }
+
+    function closeModal(modalId) {
+        $('#' + modalId).hide();
+    }
+
+    // Close modals via overlay click, X button, or Cancel
+    $(document).on('click', '.cvs-modal-overlay, .cvs-modal-close, .cvs-modal-cancel', function() {
+        $(this).closest('.cvs-modal').hide();
+    });
+
+    // ---- Section CRUD ----
+
+    // Add Section button
+    $('#cvs-add-section-btn').on('click', function() {
+        $('#cvs-section-edit-id').val('');
+        $('#cvs-section-label').val('');
+        $('#cvs-section-description').val('');
+        $('#cvs-section-modal-title').text('Add Section');
+        $('#cvs-section-submit-btn').text('Add Section');
+        openModal('cvs-section-modal');
+    });
+
+    // Edit Section button
+    $(document).on('click', '.cvs-edit-section', function() {
+        var $btn = $(this);
+        $('#cvs-section-edit-id').val($btn.data('section-id'));
+        $('#cvs-section-label').val($btn.data('label'));
+        $('#cvs-section-description').val($btn.data('description') || '');
+        $('#cvs-section-modal-title').text('Edit Section');
+        $('#cvs-section-submit-btn').text('Update Section');
+        openModal('cvs-section-modal');
+    });
+
+    // Section form submit
+    $('#cvs-section-form').on('submit', function(e) {
+        e.preventDefault();
+
+        var editId = $('#cvs-section-edit-id').val();
+        var label = $('#cvs-section-label').val().trim();
+        if (!label) { alert('Please enter a section name.'); return; }
+
+        var $btn = $('#cvs-section-submit-btn');
+        $btn.prop('disabled', true);
+
+        var data = {
+            action: editId ? 'cvs_update_section' : 'cvs_add_section',
+            nonce: cvs_admin.nonce,
+            label: label,
+            description: $('#cvs-section-description').val()
+        };
+
+        if (editId) {
+            data.section_id = editId;
+        }
+
+        $.ajax({
+            url: cvs_admin.ajax_url,
+            type: 'POST',
+            data: data,
+            success: function(response) {
+                if (response.success) {
+                    location.reload();
+                } else {
+                    alert(response.data || cvs_admin.strings.error);
+                }
+            },
+            error: function() {
+                alert(cvs_admin.strings.error);
+            },
+            complete: function() {
+                $btn.prop('disabled', false);
+            }
+        });
+    });
+
+    // Delete Section
+    $(document).on('click', '.cvs-delete-section', function() {
+        if (!confirm('Are you sure you want to delete this section? It must be empty (no fields).')) {
+            return;
+        }
+
+        var $btn = $(this);
+        var sectionId = $btn.data('section-id');
+        $btn.prop('disabled', true);
 
         $.ajax({
             url: cvs_admin.ajax_url,
             type: 'POST',
             data: {
-                action: 'cvs_toggle_builtin_field',
+                action: 'cvs_delete_section',
                 nonce: cvs_admin.nonce,
-                field_id: fieldId,
-                enabled: enabled
+                section_id: sectionId
             },
             success: function(response) {
                 if (response.success) {
-                    $label.text(enabled === '1' ? 'On' : 'Off');
+                    $btn.closest('.cvs-section-card').fadeOut(function() {
+                        $(this).remove();
+                    });
                 } else {
                     alert(response.data || cvs_admin.strings.error);
-                    $checkbox.prop('checked', !$checkbox.is(':checked'));
                 }
             },
             error: function() {
                 alert(cvs_admin.strings.error);
-                $checkbox.prop('checked', !$checkbox.is(':checked'));
+            },
+            complete: function() {
+                $btn.prop('disabled', false);
             }
         });
     });
 
-    // Show/hide options textarea based on field type
-    $('#cvs-cf-field-type').on('change', function() {
-        if ($(this).val() === 'select') {
-            $('#cvs-cf-options-row').show();
-        } else {
-            $('#cvs-cf-options-row').hide();
-        }
+    // ---- Field CRUD ----
+
+    // Show/hide options row based on field type
+    $('#cvs-field-type').on('change', function() {
+        $('#cvs-field-options-row').toggle($(this).val() === 'select');
     });
 
-    // Custom field form variables
-    var $cfForm = $('#cvs-custom-field-form');
-    var $cfEditId = $('#cvs-edit-field-id');
-    var $cfFormTitle = $('#cvs-custom-field-form-title');
-    var $cfSubmitBtn = $('#cvs-cf-submit-btn');
-    var $cfCancelBtn = $('#cvs-cf-cancel-btn');
+    // Add Field button (in section footer)
+    $(document).on('click', '.cvs-add-field-btn', function() {
+        var sectionId = $(this).data('section');
+        $('#cvs-field-edit-id').val('');
+        $('#cvs-field-section').val(sectionId);
+        $('#cvs-field-type-key').val('');
+        $('#cvs-field-label').val('');
+        $('#cvs-field-type').val('text').trigger('change');
+        $('#cvs-field-required').prop('checked', false);
+        $('#cvs-field-placeholder').val('');
+        $('#cvs-field-max-length').val('255');
+        $('#cvs-field-options').val('');
+        $('#cvs-field-section-select').val(sectionId);
+        $('#cvs-field-type-row').show();
+        $('#cvs-field-modal-title').text('Add Field');
+        $('#cvs-field-submit-btn').text('Add Field');
+        openModal('cvs-field-modal');
+    });
 
-    // Reset custom field form to add mode
-    function resetCustomFieldForm() {
-        $cfForm[0].reset();
-        $cfEditId.val('');
-        $cfFormTitle.text('Add Custom Field');
-        $cfSubmitBtn.text('Add Field');
-        $cfCancelBtn.hide();
-        $('#cvs-cf-field-type').trigger('change');
-    }
+    // Edit Field button
+    $(document).on('click', '.cvs-edit-field', function() {
+        var $btn = $(this);
+        var isBuiltin = $btn.data('field-type-key') === 'builtin_optional';
 
-    // Add / Update custom field form submit
-    $cfForm.on('submit', function(e) {
-        e.preventDefault();
+        $('#cvs-field-edit-id').val($btn.data('field-id'));
+        $('#cvs-field-section').val($btn.data('section'));
+        $('#cvs-field-type-key').val($btn.data('field-type-key'));
+        $('#cvs-field-label').val($btn.data('label'));
+        $('#cvs-field-type').val($btn.data('field-type')).trigger('change');
+        $('#cvs-field-required').prop('checked', $btn.data('required') == 1);
+        $('#cvs-field-placeholder').val($btn.data('placeholder'));
+        $('#cvs-field-max-length').val($btn.data('max-length'));
+        $('#cvs-field-options').val($btn.data('options') || '');
+        $('#cvs-field-section-select').val($btn.data('section'));
 
-        var editId = $cfEditId.val();
-        var action = editId ? 'cvs_update_custom_field' : 'cvs_add_custom_field';
-        var $button = $cfSubmitBtn;
-
-        var label = $('#cvs-cf-label').val();
-        if (!label || !label.trim()) {
-            alert('Please enter a field label.');
-            return;
+        // Builtin fields cannot change type
+        if (isBuiltin) {
+            $('#cvs-field-type-row').hide();
+        } else {
+            $('#cvs-field-type-row').show();
         }
 
-        $button.prop('disabled', true);
+        $('#cvs-field-modal-title').text('Edit Field');
+        $('#cvs-field-submit-btn').text('Update Field');
+        openModal('cvs-field-modal');
+    });
+
+    // Field form submit
+    $('#cvs-field-form').on('submit', function(e) {
+        e.preventDefault();
+
+        var editId = $('#cvs-field-edit-id').val();
+        var fieldTypeKey = $('#cvs-field-type-key').val();
+        var label = $('#cvs-field-label').val().trim();
+        if (!label) { alert('Please enter a field label.'); return; }
+
+        var $btn = $('#cvs-field-submit-btn');
+        $btn.prop('disabled', true);
+
+        // For builtin fields being edited, use toggle/update handler
+        var isBuiltin = fieldTypeKey === 'builtin_optional';
+        var action = editId ? 'cvs_update_custom_field' : 'cvs_add_custom_field';
+
+        // Builtin fields use the same update handler
+        if (isBuiltin && editId) {
+            action = 'cvs_update_custom_field';
+        }
 
         var data = {
             action: action,
             nonce: cvs_admin.nonce,
             label: label,
-            field_type: $('#cvs-cf-field-type').val(),
-            required: $('#cvs-cf-required').is(':checked') ? '1' : '0',
-            placeholder: $('#cvs-cf-placeholder').val(),
-            max_length: $('#cvs-cf-max-length').val(),
-            options: $('#cvs-cf-options').val()
+            field_type: $('#cvs-field-type').val(),
+            required: $('#cvs-field-required').is(':checked') ? '1' : '0',
+            placeholder: $('#cvs-field-placeholder').val(),
+            max_length: $('#cvs-field-max-length').val(),
+            options: $('#cvs-field-options').val(),
+            section: $('#cvs-field-section-select').val()
         };
 
         if (editId) {
@@ -618,48 +860,20 @@
                 alert(cvs_admin.strings.error);
             },
             complete: function() {
-                $button.prop('disabled', false);
+                $btn.prop('disabled', false);
             }
         });
     });
 
-    // Edit custom field - populate form
-    $(document).on('click', '.cvs-edit-custom-field', function() {
-        var $button = $(this);
-
-        $cfEditId.val($button.data('field-id'));
-        $('#cvs-cf-label').val($button.data('label'));
-        $('#cvs-cf-field-type').val($button.data('field-type')).trigger('change');
-        $('#cvs-cf-required').prop('checked', $button.data('required') === 1 || $button.data('required') === '1');
-        $('#cvs-cf-placeholder').val($button.data('placeholder'));
-        $('#cvs-cf-max-length').val($button.data('max-length'));
-        $('#cvs-cf-options').val($button.data('options'));
-
-        $cfFormTitle.text('Edit Custom Field');
-        $cfSubmitBtn.text('Update Field');
-        $cfCancelBtn.show();
-
-        // Scroll to form
-        $('html, body').animate({
-            scrollTop: $('#cvs-custom-field-form-container').offset().top - 50
-        }, 300);
-    });
-
-    // Cancel editing custom field
-    $cfCancelBtn.on('click', function() {
-        resetCustomFieldForm();
-    });
-
-    // Delete custom field
-    $(document).on('click', '.cvs-delete-custom-field', function() {
+    // Delete Field
+    $(document).on('click', '.cvs-delete-field', function() {
         if (!confirm(cvs_admin.strings.confirm_delete)) {
             return;
         }
 
-        var $button = $(this);
-        var fieldId = $button.data('field-id');
-
-        $button.prop('disabled', true);
+        var $btn = $(this);
+        var fieldId = $btn.data('field-id');
+        $btn.prop('disabled', true);
 
         $.ajax({
             url: cvs_admin.ajax_url,
@@ -671,13 +885,10 @@
             },
             success: function(response) {
                 if (response.success) {
-                    $button.closest('tr').fadeOut(function() {
+                    $btn.closest('.cvs-field-item').fadeOut(function() {
                         $(this).remove();
-                        if ($('#cvs-custom-fields-table tbody tr').length === 0) {
-                            $('#cvs-custom-fields-table tbody').html(
-                                '<tr class="no-items"><td colspan="5">No custom fields yet. Add one below.</td></tr>'
-                            );
-                        }
+                        updateEmptyStates();
+                        updateFieldCounts();
                     });
                 } else {
                     alert(response.data || cvs_admin.strings.error);
@@ -687,40 +898,44 @@
                 alert(cvs_admin.strings.error);
             },
             complete: function() {
-                $button.prop('disabled', false);
+                $btn.prop('disabled', false);
             }
         });
     });
 
-    // Reorder custom field
-    $(document).on('click', '.cvs-reorder-field', function() {
-        var $button = $(this);
-        var fieldId = $button.data('field-id');
-        var direction = $button.data('direction');
+    // Toggle field enabled/disabled
+    $(document).on('change', '.cvs-toggle-field-enabled', function() {
+        var $checkbox = $(this);
+        var fieldId = $checkbox.data('field-id');
+        var fieldTypeKey = $checkbox.data('field-type-key');
+        var enabled = $checkbox.is(':checked') ? '1' : '0';
+        var $fieldItem = $checkbox.closest('.cvs-field-item');
 
-        $button.prop('disabled', true);
+        // Use the right handler based on field type
+        var action = fieldTypeKey === 'builtin_optional' ? 'cvs_toggle_builtin_field' : 'cvs_update_custom_field';
+
+        var data = {
+            action: action,
+            nonce: cvs_admin.nonce,
+            field_id: fieldId,
+            enabled: enabled
+        };
 
         $.ajax({
             url: cvs_admin.ajax_url,
             type: 'POST',
-            data: {
-                action: 'cvs_reorder_field',
-                nonce: cvs_admin.nonce,
-                field_id: fieldId,
-                direction: direction
-            },
+            data: data,
             success: function(response) {
                 if (response.success) {
-                    location.reload();
+                    $fieldItem.toggleClass('cvs-field-disabled', enabled === '0');
                 } else {
                     alert(response.data || cvs_admin.strings.error);
+                    $checkbox.prop('checked', !$checkbox.is(':checked'));
                 }
             },
             error: function() {
                 alert(cvs_admin.strings.error);
-            },
-            complete: function() {
-                $button.prop('disabled', false);
+                $checkbox.prop('checked', !$checkbox.is(':checked'));
             }
         });
     });

@@ -49,6 +49,12 @@ class CVS_Admin {
         add_action( 'wp_ajax_cvs_update_custom_field', array( $this, 'ajax_update_custom_field' ) );
         add_action( 'wp_ajax_cvs_delete_custom_field', array( $this, 'ajax_delete_custom_field' ) );
         add_action( 'wp_ajax_cvs_reorder_field', array( $this, 'ajax_reorder_field' ) );
+
+        // Form sections AJAX handlers
+        add_action( 'wp_ajax_cvs_add_section', array( $this, 'ajax_add_section' ) );
+        add_action( 'wp_ajax_cvs_update_section', array( $this, 'ajax_update_section' ) );
+        add_action( 'wp_ajax_cvs_delete_section', array( $this, 'ajax_delete_section' ) );
+        add_action( 'wp_ajax_cvs_save_form_layout', array( $this, 'ajax_save_form_layout' ) );
     }
 
     /**
@@ -149,9 +155,17 @@ class CVS_Admin {
         );
 
         wp_enqueue_script(
+            'sortablejs',
+            CVS_PLUGIN_URL . 'admin/js/vendor/Sortable.min.js',
+            array(),
+            '1.15.6',
+            true
+        );
+
+        wp_enqueue_script(
             'cvs-admin',
             CVS_PLUGIN_URL . 'admin/js/cvs-admin.js',
-            array( 'jquery' ),
+            array( 'jquery', 'sortablejs' ),
             CVS_VERSION,
             true
         );
@@ -831,6 +845,7 @@ The School Team', 'campus-visit-scheduler' );
             'placeholder' => isset( $_POST['placeholder'] ) ? sanitize_text_field( $_POST['placeholder'] ) : '',
             'max_length'  => isset( $_POST['max_length'] ) ? absint( $_POST['max_length'] ) : 255,
             'options'     => isset( $_POST['options'] ) ? sanitize_textarea_field( $_POST['options'] ) : '',
+            'section'     => isset( $_POST['section'] ) ? sanitize_text_field( $_POST['section'] ) : 'additional',
         );
 
         $result = CVS_Form_Fields::add_field( $data );
@@ -869,6 +884,10 @@ The School Team', 'campus-visit-scheduler' );
             'max_length'  => isset( $_POST['max_length'] ) ? absint( $_POST['max_length'] ) : 255,
             'options'     => isset( $_POST['options'] ) ? sanitize_textarea_field( $_POST['options'] ) : '',
         );
+
+        if ( isset( $_POST['section'] ) ) {
+            $data['section'] = sanitize_text_field( $_POST['section'] );
+        }
 
         $result = CVS_Form_Fields::update_field( $field_id, $data );
 
@@ -928,5 +947,114 @@ The School Team', 'campus-visit-scheduler' );
         }
 
         wp_send_json_success( __( 'Field reordered.', 'campus-visit-scheduler' ) );
+    }
+
+    /**
+     * AJAX: Add a new form section
+     */
+    public function ajax_add_section() {
+        check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
+        }
+
+        $data = array(
+            'label'       => isset( $_POST['label'] ) ? sanitize_text_field( $_POST['label'] ) : '',
+            'description' => isset( $_POST['description'] ) ? sanitize_text_field( $_POST['description'] ) : '',
+        );
+
+        $result = CVS_Form_Sections::add_section( $data );
+
+        if ( is_wp_error( $result ) ) {
+            wp_send_json_error( $result->get_error_message() );
+        }
+
+        wp_send_json_success( array(
+            'section_id' => $result,
+            'message'    => __( 'Section added.', 'campus-visit-scheduler' ),
+        ) );
+    }
+
+    /**
+     * AJAX: Update a form section
+     */
+    public function ajax_update_section() {
+        check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
+        }
+
+        $section_id = isset( $_POST['section_id'] ) ? sanitize_text_field( $_POST['section_id'] ) : '';
+
+        if ( empty( $section_id ) ) {
+            wp_send_json_error( __( 'Invalid section ID.', 'campus-visit-scheduler' ) );
+        }
+
+        $data = array(
+            'label'       => isset( $_POST['label'] ) ? sanitize_text_field( $_POST['label'] ) : '',
+            'description' => isset( $_POST['description'] ) ? sanitize_text_field( $_POST['description'] ) : '',
+        );
+
+        $result = CVS_Form_Sections::update_section( $section_id, $data );
+
+        if ( is_wp_error( $result ) ) {
+            wp_send_json_error( $result->get_error_message() );
+        }
+
+        wp_send_json_success( __( 'Section updated.', 'campus-visit-scheduler' ) );
+    }
+
+    /**
+     * AJAX: Delete a form section
+     */
+    public function ajax_delete_section() {
+        check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
+        }
+
+        $section_id = isset( $_POST['section_id'] ) ? sanitize_text_field( $_POST['section_id'] ) : '';
+
+        if ( empty( $section_id ) ) {
+            wp_send_json_error( __( 'Invalid section ID.', 'campus-visit-scheduler' ) );
+        }
+
+        $result = CVS_Form_Sections::delete_section( $section_id );
+
+        if ( is_wp_error( $result ) ) {
+            wp_send_json_error( $result->get_error_message() );
+        }
+
+        wp_send_json_success( __( 'Section deleted.', 'campus-visit-scheduler' ) );
+    }
+
+    /**
+     * AJAX: Save the full form layout (section order + field order/section assignments)
+     */
+    public function ajax_save_form_layout() {
+        check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
+
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
+        }
+
+        $layout_json = isset( $_POST['layout'] ) ? wp_unslash( $_POST['layout'] ) : '';
+        $layout = json_decode( $layout_json, true );
+
+        if ( ! is_array( $layout ) || ! isset( $layout['sections'] ) || ! isset( $layout['fields'] ) ) {
+            wp_send_json_error( __( 'Invalid layout data.', 'campus-visit-scheduler' ) );
+        }
+
+        // Save section order
+        $section_ids = wp_list_pluck( $layout['sections'], 'id' );
+        CVS_Form_Sections::save_order( $section_ids );
+
+        // Save field order and section assignments
+        CVS_Form_Fields::save_layout( $layout['fields'] );
+
+        wp_send_json_success( __( 'Layout saved.', 'campus-visit-scheduler' ) );
     }
 }

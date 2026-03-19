@@ -504,6 +504,334 @@
     background: #2271b1;
 }
 
+/* ======================================
+   Visual Form Builder
+   ====================================== */
+
+.cvs-form-builder-wrap {
+    max-width: 900px;
+}
+
+.cvs-form-builder-status {
+    padding: 8px 12px;
+    margin: 10px 0;
+    border-radius: 4px;
+    font-size: 13px;
+    transition: opacity 0.3s;
+}
+
+.cvs-form-builder-status.saving {
+    background: #fff8e5;
+    border: 1px solid #dba617;
+    color: #856404;
+}
+
+.cvs-form-builder-status.saved {
+    background: #d4edda;
+    border: 1px solid #28a745;
+    color: #155724;
+}
+
+.cvs-form-builder-status.error {
+    background: #f8d7da;
+    border: 1px solid #dc3545;
+    color: #721c24;
+}
+
+/* Section Cards */
+.cvs-sections-list {
+    margin: 15px 0;
+}
+
+.cvs-section-card {
+    background: #fff;
+    border: 1px solid #ccd0d4;
+    border-radius: 6px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    transition: box-shadow 0.2s;
+}
+
+.cvs-section-card:hover {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.cvs-section-card.sortable-ghost {
+    opacity: 0.4;
+    background: #f0f6fc;
+    border: 2px dashed #2271b1;
+}
+
+.cvs-section-card.sortable-chosen {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.cvs-section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: #f6f7f7;
+    border-bottom: 1px solid #dcdcde;
+    border-radius: 6px 6px 0 0;
+}
+
+.cvs-section-title-wrap {
+    flex: 1;
+    min-width: 0;
+}
+
+.cvs-section-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #1d2327;
+}
+
+.cvs-section-desc {
+    font-size: 12px;
+    color: #666;
+    display: block;
+    margin-top: 2px;
+}
+
+.cvs-section-field-count {
+    font-size: 12px;
+    color: #999;
+    white-space: nowrap;
+}
+
+.cvs-section-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.cvs-section-footer {
+    padding: 8px 16px;
+    border-top: 1px solid #eee;
+    background: #fafafa;
+    border-radius: 0 0 6px 6px;
+}
+
+.cvs-add-field-btn {
+    font-size: 12px !important;
+    padding: 2px 10px !important;
+}
+
+/* Drag Handles */
+.cvs-drag-handle {
+    cursor: grab;
+    color: #999;
+    font-size: 16px;
+    user-select: none;
+    opacity: 0.5;
+    transition: opacity 0.2s;
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.cvs-drag-handle:hover {
+    opacity: 1;
+    color: #2271b1;
+}
+
+.cvs-drag-handle:active {
+    cursor: grabbing;
+}
+
+/* Field Items */
+.cvs-fields-list {
+    min-height: 20px;
+    padding: 4px 8px;
+}
+
+.cvs-field-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    margin: 4px 0;
+    background: #fff;
+    border: 1px solid #e2e4e7;
+    border-radius: 4px;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.cvs-field-item:hover {
+    background: #f7f9fc;
+    border-color: #c3c4c7;
+}
+
+.cvs-field-item.sortable-ghost {
+    opacity: 0.4;
+    background: #e8f0fe;
+    border: 2px dashed #2271b1;
+}
+
+.cvs-field-item.sortable-chosen {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+    z-index: 10;
+}
+
+.cvs-field-item.cvs-field-disabled {
+    opacity: 0.5;
+    background: #f9f9f9;
+}
+
+.cvs-field-item.cvs-field-disabled .cvs-field-label {
+    text-decoration: line-through;
+    color: #999;
+}
+
+.cvs-field-label {
+    flex: 1;
+    font-size: 13px;
+    font-weight: 500;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.cvs-field-type-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 500;
+    background: #e0e7ff;
+    color: #3730a3;
+    white-space: nowrap;
+}
+
+.cvs-field-required-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: 500;
+    background: #fef3cd;
+    color: #856404;
+    white-space: nowrap;
+}
+
+.cvs-field-item-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.cvs-field-toggle {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.cvs-field-toggle input[type="checkbox"] {
+    margin: 0;
+}
+
+.cvs-fields-empty-state {
+    text-align: center;
+    padding: 20px;
+    color: #999;
+    font-size: 13px;
+    font-style: italic;
+    border: 2px dashed #dcdcde;
+    border-radius: 4px;
+    margin: 4px 0;
+}
+
+/* Add Section Button */
+#cvs-add-section-btn {
+    margin-top: 5px;
+}
+
+/* Modals */
+.cvs-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 100100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cvs-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.cvs-modal-content {
+    position: relative;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+    width: 550px;
+    max-width: 90vw;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.cvs-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid #dcdcde;
+}
+
+.cvs-modal-header h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.cvs-modal-close {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    line-height: 1;
+}
+
+.cvs-modal-close:hover {
+    color: #d63638;
+}
+
+.cvs-modal .form-table {
+    margin: 0;
+    padding: 0 20px;
+}
+
+.cvs-modal .form-table th {
+    width: 110px;
+    padding: 10px 10px 10px 0;
+    font-size: 13px;
+}
+
+.cvs-modal .form-table td {
+    padding: 10px 0;
+}
+
+.cvs-modal-footer {
+    display: flex;
+    gap: 8px;
+    padding: 16px 20px;
+    border-top: 1px solid #dcdcde;
+    justify-content: flex-end;
+}
+
 /* Responsive */
 @media screen and (max-width: 782px) {
     .cvs-detail-columns {

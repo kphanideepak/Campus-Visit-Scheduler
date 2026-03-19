@@ -184,6 +184,30 @@ class CVS_Activator {
             }
         }
 
+        // Initialize form section definitions if they don't exist
+        if ( false === get_option( 'cvs_form_sections' ) ) {
+            if ( class_exists( 'CVS_Form_Sections' ) ) {
+                update_option( 'cvs_form_sections', CVS_Form_Sections::get_default_sections() );
+            } else {
+                update_option( 'cvs_form_sections', array(
+                    array(
+                        'id'          => 'child_info',
+                        'label'       => 'Child Information (Optional)',
+                        'description' => '',
+                        'sort_order'  => 10,
+                        'type'        => 'builtin',
+                    ),
+                    array(
+                        'id'          => 'additional',
+                        'label'       => 'Additional Information',
+                        'description' => '',
+                        'sort_order'  => 20,
+                        'type'        => 'builtin',
+                    ),
+                ) );
+            }
+        }
+
         // Initialize form field definitions if they don't exist
         if ( false === get_option( 'cvs_form_fields' ) ) {
             $year_levels = class_exists( 'CVS_Helpers' ) ? CVS_Helpers::get_year_levels() : array();
