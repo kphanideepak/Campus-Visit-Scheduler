@@ -51,11 +51,13 @@ foreach ( $monthly_data as $row ) {
         $chart_data[ $month ]['cancelled'] = (int) $row['count'];
     }
 }
+
+$cvs_page_title    = __( 'Reports', 'campus-visit-scheduler' );
+$cvs_page_subtitle = __( 'Booking trends and statistics for the period you choose.', 'campus-visit-scheduler' );
+include CVS_PLUGIN_DIR . 'admin/partials/_branded-header.php';
 ?>
 
 <div class="wrap cvs-reports-wrap">
-    <h1><?php esc_html_e( 'Booking Reports', 'campus-visit-scheduler' ); ?></h1>
-
     <div class="cvs-report-filters">
         <form method="get" class="cvs-filter-form">
             <input type="hidden" name="page" value="cvs-reports">
@@ -159,3 +161,4 @@ foreach ( $monthly_data as $row ) {
         </div>
     <?php endif; ?>
 </div>
+<?php include CVS_PLUGIN_DIR . 'admin/partials/_branded-footer.php'; ?>

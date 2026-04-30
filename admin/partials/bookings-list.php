@@ -36,12 +36,14 @@ $total = $result['total'];
 $total_pages = $result['pages'];
 
 $statuses = CVS_Helpers::get_booking_statuses();
+
+$cvs_page_title    = __( 'Bookings', 'campus-visit-scheduler' );
+$cvs_page_subtitle = __( 'Manage tour enquiries from prospective families.', 'campus-visit-scheduler' );
+include CVS_PLUGIN_DIR . 'admin/partials/_branded-header.php';
 ?>
 
 <div class="wrap cvs-bookings-wrap">
-    <h1 class="wp-heading-inline"><?php esc_html_e( 'Bookings', 'campus-visit-scheduler' ); ?></h1>
-
-    <a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-ajax.php?action=cvs_export_bookings&status=' . $status . '&date_from=' . $date_from . '&date_to=' . $date_to ), 'cvs_admin_nonce', 'nonce' ) ); ?>" class="page-title-action">
+    <a href="<?php echo esc_url( wp_nonce_url( admin_url( 'admin-ajax.php?action=cvs_export_bookings&status=' . $status . '&date_from=' . $date_from . '&date_to=' . $date_to ), 'cvs_admin_nonce', 'nonce' ) ); ?>" class="page-title-action cvs-page-action">
         <?php esc_html_e( 'Export CSV', 'campus-visit-scheduler' ); ?>
     </a>
 
@@ -185,3 +187,4 @@ $statuses = CVS_Helpers::get_booking_statuses();
         </div>
     <?php endif; ?>
 </div>
+<?php include CVS_PLUGIN_DIR . 'admin/partials/_branded-footer.php'; ?>

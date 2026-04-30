@@ -1269,3 +1269,266 @@
         align-items: stretch;
     }
 }
+
+/* ============================================================================
+ * Branded chrome — KalluriIT header/footer, tab intro cards, brand palette
+ * Added in v1.3.0 alongside custom-capabilities split.
+ * ========================================================================== */
+
+:root {
+    --cvs-brand-primary: #004aad;
+    --cvs-brand-primary-hover: #003d91;
+    --cvs-brand-accent: #f26b2b;
+    --cvs-brand-aqua: #28b4e8;
+    --cvs-brand-soft: #f0f6ff;
+    --cvs-text-strong: #1d2327;
+    --cvs-text-muted: #6b7280;
+    --cvs-border-soft: #e5e7eb;
+}
+
+/* ─── Branded header ─────────────────────────────────────────────────────── */
+
+.cvs-brand-header {
+    background: #fff;
+    border: 1px solid var(--cvs-border-soft);
+    border-radius: 10px;
+    padding: 22px 24px 0;
+    margin: 16px 20px 20px 0;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+    position: relative;
+    overflow: hidden;
+}
+
+.cvs-brand-header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 18px;
+}
+
+.cvs-brand-header__title {
+    flex: 1;
+    min-width: 0;
+}
+
+.cvs-brand-header__h1 {
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--cvs-text-strong);
+    letter-spacing: -0.01em;
+}
+
+.cvs-brand-header__subtitle {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: var(--cvs-text-muted);
+    font-weight: 400;
+}
+
+.cvs-brand-header__logo {
+    display: inline-flex;
+    align-items: center;
+    line-height: 0;
+    flex-shrink: 0;
+    transition: opacity 0.15s ease;
+}
+
+.cvs-brand-header__logo:hover,
+.cvs-brand-header__logo:focus {
+    opacity: 0.85;
+}
+
+.cvs-brand-header__logo img {
+    height: 38px;
+    width: auto;
+    display: block;
+}
+
+.cvs-brand-header__accent {
+    height: 3px;
+    background: linear-gradient(90deg,
+        var(--cvs-brand-primary) 0%,
+        var(--cvs-brand-aqua) 60%,
+        var(--cvs-brand-accent) 100%);
+    margin: 0 -24px;
+}
+
+/* Hide WP's default "Add Plugins/Settings/etc" h1 above our header to avoid
+ * double-titling on screens where WP injects one. */
+.cvs-brand-header + .wrap > h1.wp-heading-inline:first-child,
+.cvs-brand-header + .wrap > h1:first-child:not(.wp-heading-inline) {
+    display: none;
+}
+
+/* ─── Branded footer ─────────────────────────────────────────────────────── */
+
+.cvs-brand-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 30px 20px 30px 0;
+    padding: 14px 20px;
+    background: var(--cvs-brand-soft);
+    border: 1px solid var(--cvs-border-soft);
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--cvs-text-muted);
+}
+
+.cvs-brand-footer__chip a {
+    color: var(--cvs-brand-primary);
+    font-weight: 600;
+    text-decoration: none;
+    border-bottom: 1px dashed currentColor;
+}
+
+.cvs-brand-footer__chip a:hover,
+.cvs-brand-footer__chip a:focus {
+    color: var(--cvs-brand-primary-hover);
+}
+
+.cvs-brand-footer__version {
+    font-variant-numeric: tabular-nums;
+    color: #94a3b8;
+}
+
+/* ─── Tab intro cards ────────────────────────────────────────────────────── */
+
+.cvs-tab-intro {
+    background: #fff;
+    border: 1px solid var(--cvs-border-soft);
+    border-left: 4px solid var(--cvs-brand-primary);
+    border-radius: 8px;
+    padding: 18px 22px;
+    margin: 0 0 24px;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.03);
+}
+
+.cvs-tab-intro__title {
+    margin: 0 0 6px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--cvs-text-strong);
+}
+
+.cvs-tab-intro__body {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #4b5563;
+}
+
+.cvs-tab-intro__tip {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: #fff8e6;
+    border: 1px solid #f5e0a4;
+    border-radius: 6px;
+    font-size: 12.5px;
+    line-height: 1.55;
+    color: #78550c;
+}
+
+.cvs-tab-intro__tip-icon {
+    flex-shrink: 0;
+    line-height: 1.4;
+}
+
+/* ─── Polish: hide our settings page's old h1 (replaced by branded header) ── */
+
+.cvs-settings-wrap > h1:first-child {
+    display: none;
+}
+
+/* ─── Polish: brand-coloured nav-tab indicator + page-title export action ── */
+
+.cvs-settings-wrap .nav-tab-wrapper {
+    margin-top: 0;
+    margin-bottom: 0;
+}
+
+.cvs-settings-wrap .nav-tab-active,
+.cvs-settings-wrap .nav-tab-active:focus,
+.cvs-settings-wrap .nav-tab-active:hover {
+    border-bottom-color: var(--cvs-brand-primary);
+    box-shadow: inset 0 -2px 0 var(--cvs-brand-primary);
+    color: var(--cvs-text-strong);
+    background: #fff;
+}
+
+.cvs-settings-content {
+    margin-top: 18px;
+}
+
+/* "Export CSV" page action chip on Bookings */
+.cvs-page-action {
+    background: var(--cvs-brand-primary) !important;
+    border-color: var(--cvs-brand-primary) !important;
+    color: #fff !important;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+.cvs-page-action:hover,
+.cvs-page-action:focus {
+    background: var(--cvs-brand-primary-hover) !important;
+    border-color: var(--cvs-brand-primary-hover) !important;
+}
+
+/* ─── Polish: wrap padding so brand chrome lines up with WP gutter ──────── */
+
+.cvs-bookings-wrap,
+.cvs-calendar-wrap,
+.cvs-reports-wrap,
+.cvs-settings-wrap {
+    margin-right: 20px;
+}
+
+/* ─── Polish: empty-state pattern (used by future empty-list partials) ──── */
+
+.cvs-empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    background: #fff;
+    border: 1px dashed var(--cvs-border-soft);
+    border-radius: 10px;
+    color: var(--cvs-text-muted);
+}
+
+.cvs-empty-state__title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--cvs-text-strong);
+    margin: 0 0 6px;
+}
+
+.cvs-empty-state__body {
+    font-size: 13px;
+    margin: 0 0 18px;
+    line-height: 1.6;
+}
+
+/* ─── Responsive: stack header bits + relax footer on narrow widths ─────── */
+
+@media screen and (max-width: 782px) {
+    .cvs-brand-header__inner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 14px;
+    }
+
+    .cvs-brand-header__logo img {
+        height: 32px;
+    }
+
+    .cvs-brand-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+}

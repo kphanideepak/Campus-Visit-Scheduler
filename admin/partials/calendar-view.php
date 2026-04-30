@@ -100,11 +100,13 @@ for ( $d = 1; $d <= $days_in_month; $d++ ) {
 }
 
 $today = gmdate( 'Y-m-d' );
+
+$cvs_page_title    = __( 'Booking Calendar', 'campus-visit-scheduler' );
+$cvs_page_subtitle = __( 'See booked tours and capacity at a glance.', 'campus-visit-scheduler' );
+include CVS_PLUGIN_DIR . 'admin/partials/_branded-header.php';
 ?>
 
 <div class="wrap cvs-calendar-wrap">
-    <h1><?php esc_html_e( 'Booking Calendar', 'campus-visit-scheduler' ); ?></h1>
-
     <div class="cvs-calendar-nav">
         <a href="<?php echo esc_url( admin_url( 'admin.php?page=cvs-calendar&month=' . $prev_month . '&year=' . $prev_year ) ); ?>" class="button">
             &laquo; <?php esc_html_e( 'Previous', 'campus-visit-scheduler' ); ?>
@@ -199,3 +201,4 @@ $today = gmdate( 'Y-m-d' );
         </tbody>
     </table>
 </div>
+<?php include CVS_PLUGIN_DIR . 'admin/partials/_branded-footer.php'; ?>

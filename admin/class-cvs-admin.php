@@ -61,11 +61,11 @@ class CVS_Admin {
      * Add admin menu pages
      */
     public function add_admin_menu() {
-        // Main menu
+        // Main menu — visible to anyone with the read cap (Admin + Editor by default).
         add_menu_page(
             __( 'Campus Visit Scheduler', 'campus-visit-scheduler' ),
             __( 'Campus Visits', 'campus-visit-scheduler' ),
-            'manage_options',
+            CVS_Capabilities::VIEW_BOOKINGS,
             'cvs-bookings',
             array( $this, 'render_bookings_page' ),
             'dashicons-calendar-alt',
@@ -77,7 +77,7 @@ class CVS_Admin {
             'cvs-bookings',
             __( 'Bookings', 'campus-visit-scheduler' ),
             __( 'Bookings', 'campus-visit-scheduler' ),
-            'manage_options',
+            CVS_Capabilities::VIEW_BOOKINGS,
             'cvs-bookings',
             array( $this, 'render_bookings_page' )
         );
@@ -87,7 +87,7 @@ class CVS_Admin {
             'cvs-bookings',
             __( 'Calendar View', 'campus-visit-scheduler' ),
             __( 'Calendar', 'campus-visit-scheduler' ),
-            'manage_options',
+            CVS_Capabilities::VIEW_BOOKINGS,
             'cvs-calendar',
             array( $this, 'render_calendar_page' )
         );
@@ -97,17 +97,17 @@ class CVS_Admin {
             'cvs-bookings',
             __( 'Reports', 'campus-visit-scheduler' ),
             __( 'Reports', 'campus-visit-scheduler' ),
-            'manage_options',
+            CVS_Capabilities::VIEW_BOOKINGS,
             'cvs-reports',
             array( $this, 'render_reports_page' )
         );
 
-        // Settings submenu
+        // Settings submenu — restricted to the configuration cap (Admin only by default).
         add_submenu_page(
             'cvs-bookings',
             __( 'Settings', 'campus-visit-scheduler' ),
             __( 'Settings', 'campus-visit-scheduler' ),
-            'manage_options',
+            CVS_Capabilities::MANAGE_SETTINGS,
             'cvs-settings',
             array( $this, 'render_settings_page' )
         );
@@ -225,6 +225,8 @@ class CVS_Admin {
      * Render bookings list page
      */
     public function render_bookings_page() {
+        CVS_Capabilities::require_cap( CVS_Capabilities::VIEW_BOOKINGS );
+
         // Check for view action
         if ( isset( $_GET['action'] ) && 'view' === $_GET['action'] && isset( $_GET['id'] ) ) {
             $this->render_booking_detail_page();
@@ -238,6 +240,7 @@ class CVS_Admin {
      * Render booking detail page
      */
     public function render_booking_detail_page() {
+        CVS_Capabilities::require_cap( CVS_Capabilities::VIEW_BOOKINGS );
         include CVS_PLUGIN_DIR . 'admin/partials/booking-detail.php';
     }
 
@@ -245,6 +248,7 @@ class CVS_Admin {
      * Render calendar page
      */
     public function render_calendar_page() {
+        CVS_Capabilities::require_cap( CVS_Capabilities::VIEW_BOOKINGS );
         include CVS_PLUGIN_DIR . 'admin/partials/calendar-view.php';
     }
 
@@ -252,6 +256,7 @@ class CVS_Admin {
      * Render reports page
      */
     public function render_reports_page() {
+        CVS_Capabilities::require_cap( CVS_Capabilities::VIEW_BOOKINGS );
         include CVS_PLUGIN_DIR . 'admin/partials/reports-page.php';
     }
 
@@ -259,6 +264,7 @@ class CVS_Admin {
      * Render settings page
      */
     public function render_settings_page() {
+        CVS_Capabilities::require_cap( CVS_Capabilities::MANAGE_SETTINGS );
         include CVS_PLUGIN_DIR . 'admin/partials/settings-page.php';
     }
 
@@ -268,7 +274,7 @@ class CVS_Admin {
     public function ajax_add_time_slot() {
         check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( CVS_Capabilities::MANAGE_SETTINGS ) ) {
             wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
         }
 
@@ -323,7 +329,7 @@ class CVS_Admin {
     public function ajax_delete_time_slot() {
         check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( CVS_Capabilities::MANAGE_SETTINGS ) ) {
             wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
         }
 
@@ -347,7 +353,7 @@ class CVS_Admin {
     public function ajax_add_blackout_date() {
         check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( CVS_Capabilities::MANAGE_SETTINGS ) ) {
             wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
         }
 
@@ -387,7 +393,7 @@ class CVS_Admin {
     public function ajax_delete_blackout_date() {
         check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( CVS_Capabilities::MANAGE_SETTINGS ) ) {
             wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
         }
 
@@ -411,7 +417,7 @@ class CVS_Admin {
     public function ajax_add_recipient() {
         check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( CVS_Capabilities::MANAGE_SETTINGS ) ) {
             wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
         }
 
@@ -434,7 +440,7 @@ class CVS_Admin {
     public function ajax_delete_recipient() {
         check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( CVS_Capabilities::MANAGE_SETTINGS ) ) {
             wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
         }
 
@@ -454,7 +460,7 @@ class CVS_Admin {
     public function ajax_cancel_booking() {
         check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( CVS_Capabilities::MANAGE_BOOKINGS ) ) {
             wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
         }
 
@@ -476,7 +482,7 @@ class CVS_Admin {
     public function ajax_resend_confirmation() {
         check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( CVS_Capabilities::MANAGE_BOOKINGS ) ) {
             wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
         }
 
@@ -502,7 +508,7 @@ class CVS_Admin {
     public function ajax_save_admin_notes() {
         check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( CVS_Capabilities::MANAGE_BOOKINGS ) ) {
             wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
         }
 
@@ -524,7 +530,7 @@ class CVS_Admin {
     public function ajax_export_bookings() {
         check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( CVS_Capabilities::VIEW_BOOKINGS ) ) {
             wp_die( esc_html__( 'Permission denied.', 'campus-visit-scheduler' ) );
         }
 
@@ -589,7 +595,7 @@ class CVS_Admin {
     public function ajax_add_exclusion_period() {
         check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( CVS_Capabilities::MANAGE_SETTINGS ) ) {
             wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
         }
 
@@ -618,7 +624,7 @@ class CVS_Admin {
     public function ajax_update_exclusion_period() {
         check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( CVS_Capabilities::MANAGE_SETTINGS ) ) {
             wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
         }
 
@@ -650,7 +656,7 @@ class CVS_Admin {
     public function ajax_delete_exclusion_period() {
         check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( CVS_Capabilities::MANAGE_SETTINGS ) ) {
             wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
         }
 
@@ -675,7 +681,7 @@ class CVS_Admin {
     public function ajax_reset_email_templates() {
         check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( CVS_Capabilities::MANAGE_SETTINGS ) ) {
             wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
         }
 
@@ -793,7 +799,7 @@ The School Team', 'campus-visit-scheduler' );
     public function ajax_send_test_email() {
         check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( CVS_Capabilities::MANAGE_SETTINGS ) ) {
             wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
         }
 
@@ -823,7 +829,7 @@ The School Team', 'campus-visit-scheduler' );
     public function ajax_toggle_builtin_field() {
         check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( CVS_Capabilities::MANAGE_SETTINGS ) ) {
             wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
         }
 
@@ -849,7 +855,7 @@ The School Team', 'campus-visit-scheduler' );
     public function ajax_add_custom_field() {
         check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( CVS_Capabilities::MANAGE_SETTINGS ) ) {
             wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
         }
 
@@ -881,7 +887,7 @@ The School Team', 'campus-visit-scheduler' );
     public function ajax_update_custom_field() {
         check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( CVS_Capabilities::MANAGE_SETTINGS ) ) {
             wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
         }
 
@@ -919,7 +925,7 @@ The School Team', 'campus-visit-scheduler' );
     public function ajax_delete_custom_field() {
         check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( CVS_Capabilities::MANAGE_SETTINGS ) ) {
             wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
         }
 
@@ -944,7 +950,7 @@ The School Team', 'campus-visit-scheduler' );
     public function ajax_reorder_field() {
         check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( CVS_Capabilities::MANAGE_SETTINGS ) ) {
             wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
         }
 
@@ -970,7 +976,7 @@ The School Team', 'campus-visit-scheduler' );
     public function ajax_add_section() {
         check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( CVS_Capabilities::MANAGE_SETTINGS ) ) {
             wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
         }
 
@@ -997,7 +1003,7 @@ The School Team', 'campus-visit-scheduler' );
     public function ajax_update_section() {
         check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( CVS_Capabilities::MANAGE_SETTINGS ) ) {
             wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
         }
 
@@ -1027,7 +1033,7 @@ The School Team', 'campus-visit-scheduler' );
     public function ajax_delete_section() {
         check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( CVS_Capabilities::MANAGE_SETTINGS ) ) {
             wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
         }
 
@@ -1052,7 +1058,7 @@ The School Team', 'campus-visit-scheduler' );
     public function ajax_save_form_layout() {
         check_ajax_referer( 'cvs_admin_nonce', 'nonce' );
 
-        if ( ! current_user_can( 'manage_options' ) ) {
+        if ( ! current_user_can( CVS_Capabilities::MANAGE_SETTINGS ) ) {
             wp_send_json_error( __( 'Permission denied.', 'campus-visit-scheduler' ) );
         }
 

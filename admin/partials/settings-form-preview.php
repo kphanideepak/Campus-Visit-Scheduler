@@ -32,11 +32,6 @@ foreach ( $all_enabled_fields as $f ) {
 ?>
 
 <div class="cvs-form-preview-wrap">
-    <h2><?php esc_html_e( 'Form Preview', 'campus-visit-scheduler' ); ?></h2>
-    <p class="description">
-        <?php esc_html_e( 'This is how your booking form will appear to visitors. All fields are disabled — this is a preview only.', 'campus-visit-scheduler' ); ?>
-    </p>
-
     <div class="cvs-booking-wrapper">
 
         <!-- Core: Date & Time -->
