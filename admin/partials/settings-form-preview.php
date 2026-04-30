@@ -2,6 +2,12 @@
 /**
  * Form Preview tab — shows a read-only preview of the complete booking form
  *
+ * Uses the same class names and structure as the front-end booking form
+ * (public/partials/booking-form.php) and enqueues cvs-public.css so the
+ * preview is genuinely "how visitors see it". A small admin-context
+ * override block in cvs-admin.css scopes a couple of WP-admin-only fixes
+ * (e.g. neutralising the .wp-core-ui select chevron) to .cvs-form-preview-wrap.
+ *
  * @package CampusVisitScheduler
  */
 
@@ -31,139 +37,140 @@ foreach ( $all_enabled_fields as $f ) {
         <?php esc_html_e( 'This is how your booking form will appear to visitors. All fields are disabled — this is a preview only.', 'campus-visit-scheduler' ); ?>
     </p>
 
-    <div class="cvs-preview-container">
-        <div class="cvs-preview-form">
+    <div class="cvs-booking-wrapper">
 
-            <!-- Core: Date & Time -->
-            <div class="cvs-preview-section">
-                <h3><?php esc_html_e( 'Select Tour Date & Time', 'campus-visit-scheduler' ); ?></h3>
-                <div class="cvs-preview-row">
-                    <div class="cvs-preview-field-wrap">
-                        <label><?php esc_html_e( 'Tour Date', 'campus-visit-scheduler' ); ?> <span class="required">*</span></label>
-                        <select disabled>
-                            <option><?php esc_html_e( 'Select a date...', 'campus-visit-scheduler' ); ?></option>
-                        </select>
-                    </div>
-                    <div class="cvs-preview-field-wrap">
-                        <label><?php esc_html_e( 'Tour Time', 'campus-visit-scheduler' ); ?> <span class="required">*</span></label>
-                        <div class="cvs-preview-placeholder"><?php esc_html_e( 'Please select a date first.', 'campus-visit-scheduler' ); ?></div>
-                    </div>
+        <!-- Core: Date & Time -->
+        <div class="cvs-form-section">
+            <h3><?php esc_html_e( 'Select Tour Date & Time', 'campus-visit-scheduler' ); ?></h3>
+            <div class="cvs-form-row">
+                <div class="cvs-form-field">
+                    <label><?php esc_html_e( 'Tour Date', 'campus-visit-scheduler' ); ?> <span class="required">*</span></label>
+                    <select disabled>
+                        <option><?php esc_html_e( 'Select a date...', 'campus-visit-scheduler' ); ?></option>
+                    </select>
                 </div>
-                <?php if ( ! empty( $fields_by_section['date_time'] ) ) : ?>
-                    <?php foreach ( $fields_by_section['date_time'] as $field ) : ?>
-                        <?php self_render_preview_field( $field ); ?>
-                    <?php endforeach; ?>
-                <?php endif; ?>
+                <div class="cvs-form-field">
+                    <label><?php esc_html_e( 'Tour Time', 'campus-visit-scheduler' ); ?> <span class="required">*</span></label>
+                    <p class="cvs-select-date-prompt"><?php esc_html_e( 'Please select a date first.', 'campus-visit-scheduler' ); ?></p>
+                </div>
             </div>
-
-            <!-- Core: Group Size -->
-            <div class="cvs-preview-section">
-                <h3><?php esc_html_e( 'Group Size', 'campus-visit-scheduler' ); ?></h3>
-                <div class="cvs-preview-row cvs-preview-row-3">
-                    <div class="cvs-preview-field-wrap">
-                        <label><?php esc_html_e( 'Number of Adults', 'campus-visit-scheduler' ); ?> <span class="required">*</span></label>
-                        <select disabled>
-                            <option>1</option>
-                        </select>
-                    </div>
-                    <div class="cvs-preview-field-wrap">
-                        <label><?php esc_html_e( 'Number of Children', 'campus-visit-scheduler' ); ?></label>
-                        <select disabled>
-                            <option>0</option>
-                        </select>
-                    </div>
-                    <div class="cvs-preview-field-wrap">
-                        <label><?php esc_html_e( 'Total Group Size', 'campus-visit-scheduler' ); ?></label>
-                        <div class="cvs-preview-total">1</div>
-                        <p class="cvs-preview-hint">
-                            <?php
-                            printf(
-                                /* translators: %d: maximum group size */
-                                esc_html__( 'Maximum %d people per booking', 'campus-visit-scheduler' ),
-                                esc_html( $max_group_size )
-                            );
-                            ?>
-                        </p>
-                    </div>
-                </div>
-                <?php if ( ! empty( $fields_by_section['group_size'] ) ) : ?>
-                    <?php foreach ( $fields_by_section['group_size'] as $field ) : ?>
-                        <?php self_render_preview_field( $field ); ?>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </div>
-
-            <!-- Core: Your Details -->
-            <div class="cvs-preview-section">
-                <h3><?php esc_html_e( 'Your Details', 'campus-visit-scheduler' ); ?></h3>
-                <div class="cvs-preview-row">
-                    <div class="cvs-preview-field-wrap cvs-preview-full">
-                        <label><?php esc_html_e( 'Full Name', 'campus-visit-scheduler' ); ?> <span class="required">*</span></label>
-                        <input type="text" disabled>
-                    </div>
-                </div>
-                <div class="cvs-preview-row">
-                    <div class="cvs-preview-field-wrap">
-                        <label><?php esc_html_e( 'Email Address', 'campus-visit-scheduler' ); ?> <span class="required">*</span></label>
-                        <input type="email" disabled>
-                    </div>
-                    <div class="cvs-preview-field-wrap">
-                        <label><?php esc_html_e( 'Phone Number', 'campus-visit-scheduler' ); ?> <span class="required">*</span></label>
-                        <input type="tel" disabled>
-                    </div>
-                </div>
-                <?php if ( ! empty( $fields_by_section['your_details'] ) ) : ?>
-                    <?php foreach ( $fields_by_section['your_details'] as $field ) : ?>
-                        <?php self_render_preview_field( $field ); ?>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </div>
-
-            <?php
-            // Non-core sections with enabled custom fields
-            foreach ( $sections as $section ) :
-                if ( 'core' === $section['type'] ) :
-                    continue;
-                endif;
-
-                $section_fields = isset( $fields_by_section[ $section['id'] ] ) ? $fields_by_section[ $section['id'] ] : array();
-                if ( empty( $section_fields ) ) :
-                    continue;
-                endif;
-            ?>
-                <div class="cvs-preview-section">
-                    <h3><?php echo esc_html( $section['label'] ); ?></h3>
-                    <?php if ( ! empty( $section['description'] ) ) : ?>
-                        <p class="cvs-preview-section-desc"><?php echo esc_html( $section['description'] ); ?></p>
-                    <?php endif; ?>
-                    <?php foreach ( $section_fields as $field ) : ?>
-                        <?php self_render_preview_field( $field ); ?>
-                    <?php endforeach; ?>
-                </div>
-            <?php endforeach; ?>
-
-            <div class="cvs-preview-actions">
-                <button type="button" class="button button-primary" disabled>
-                    <?php esc_html_e( 'Book Tour', 'campus-visit-scheduler' ); ?>
-                </button>
-            </div>
-
+            <?php if ( ! empty( $fields_by_section['date_time'] ) ) : ?>
+                <?php foreach ( $fields_by_section['date_time'] as $field ) : ?>
+                    <?php cvs_render_preview_field( $field ); ?>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </div>
+
+        <!-- Core: Group Size -->
+        <div class="cvs-form-section">
+            <h3><?php esc_html_e( 'Group Size', 'campus-visit-scheduler' ); ?></h3>
+            <div class="cvs-form-row">
+                <div class="cvs-form-field">
+                    <label><?php esc_html_e( 'Number of Adults', 'campus-visit-scheduler' ); ?> <span class="required">*</span></label>
+                    <select disabled>
+                        <option>1</option>
+                    </select>
+                </div>
+                <div class="cvs-form-field">
+                    <label><?php esc_html_e( 'Number of Children', 'campus-visit-scheduler' ); ?></label>
+                    <select disabled>
+                        <option>0</option>
+                    </select>
+                </div>
+                <div class="cvs-form-field cvs-total-field">
+                    <label><?php esc_html_e( 'Total Group Size', 'campus-visit-scheduler' ); ?></label>
+                    <div class="cvs-total-group">1</div>
+                    <p class="cvs-field-note">
+                        <?php
+                        printf(
+                            /* translators: %d: maximum group size */
+                            esc_html__( 'Maximum %d people per booking', 'campus-visit-scheduler' ),
+                            esc_html( $max_group_size )
+                        );
+                        ?>
+                    </p>
+                </div>
+            </div>
+            <?php if ( ! empty( $fields_by_section['group_size'] ) ) : ?>
+                <?php foreach ( $fields_by_section['group_size'] as $field ) : ?>
+                    <?php cvs_render_preview_field( $field ); ?>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+
+        <!-- Core: Your Details -->
+        <div class="cvs-form-section">
+            <h3><?php esc_html_e( 'Your Details', 'campus-visit-scheduler' ); ?></h3>
+            <div class="cvs-form-row">
+                <div class="cvs-form-field cvs-full-width">
+                    <label><?php esc_html_e( 'Full Name', 'campus-visit-scheduler' ); ?> <span class="required">*</span></label>
+                    <input type="text" disabled>
+                </div>
+            </div>
+            <div class="cvs-form-row">
+                <div class="cvs-form-field">
+                    <label><?php esc_html_e( 'Email Address', 'campus-visit-scheduler' ); ?> <span class="required">*</span></label>
+                    <input type="email" disabled>
+                </div>
+                <div class="cvs-form-field">
+                    <label><?php esc_html_e( 'Phone Number', 'campus-visit-scheduler' ); ?> <span class="required">*</span></label>
+                    <input type="tel" disabled>
+                </div>
+            </div>
+            <?php if ( ! empty( $fields_by_section['your_details'] ) ) : ?>
+                <?php foreach ( $fields_by_section['your_details'] as $field ) : ?>
+                    <?php cvs_render_preview_field( $field ); ?>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+
+        <?php
+        // Non-core sections with enabled custom fields
+        foreach ( $sections as $section ) :
+            if ( 'core' === $section['type'] ) :
+                continue;
+            endif;
+
+            $section_fields = isset( $fields_by_section[ $section['id'] ] ) ? $fields_by_section[ $section['id'] ] : array();
+            if ( empty( $section_fields ) ) :
+                continue;
+            endif;
+        ?>
+            <div class="cvs-form-section">
+                <h3><?php echo esc_html( $section['label'] ); ?></h3>
+                <?php if ( ! empty( $section['description'] ) ) : ?>
+                    <p class="cvs-field-note"><?php echo esc_html( $section['description'] ); ?></p>
+                <?php endif; ?>
+                <?php foreach ( $section_fields as $field ) : ?>
+                    <?php cvs_render_preview_field( $field ); ?>
+                <?php endforeach; ?>
+            </div>
+        <?php endforeach; ?>
+
+        <div class="cvs-form-actions">
+            <button type="button" class="cvs-btn cvs-btn-primary" disabled>
+                <?php esc_html_e( 'Book Tour', 'campus-visit-scheduler' ); ?>
+            </button>
+        </div>
+
     </div>
 </div>
 
 <?php
 /**
- * Render a disabled preview of a form field
+ * Render a disabled preview of a custom form field using front-end class names
+ * so cvs-public.css styles it identically to the visitor-facing form.
  *
  * @param array $field Field definition.
  */
-function self_render_preview_field( $field ) {
+function cvs_render_preview_field( $field ) {
     $required_span = ! empty( $field['required'] ) ? ' <span class="required">*</span>' : '';
     $placeholder   = ! empty( $field['placeholder'] ) ? esc_attr( $field['placeholder'] ) : '';
+    $is_textarea   = ( 'textarea' === $field['field_type'] );
+    $field_class   = 'cvs-form-field' . ( $is_textarea ? ' cvs-full-width' : '' );
     ?>
-    <div class="cvs-preview-row">
-        <div class="cvs-preview-field-wrap <?php echo ( 'textarea' === $field['field_type'] ) ? 'cvs-preview-full' : ''; ?>">
+    <div class="cvs-form-row">
+        <div class="<?php echo esc_attr( $field_class ); ?>">
             <?php if ( 'checkbox' !== $field['field_type'] ) : ?>
                 <label><?php echo esc_html( $field['label'] ); ?><?php echo $required_span; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></label>
             <?php endif; ?>
@@ -183,10 +190,9 @@ function self_render_preview_field( $field ) {
                     </select>
                     <?php break;
                 case 'checkbox': ?>
-                    <label class="cvs-preview-checkbox">
+                    <label class="cvs-preview-checkbox-inline">
                         <input type="checkbox" disabled>
-                        <?php echo esc_html( $field['label'] ); ?>
-                        <?php echo $required_span; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                        <span><?php echo esc_html( $field['label'] ); ?><?php echo $required_span; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></span>
                     </label>
                     <?php break;
                 case 'number': ?>

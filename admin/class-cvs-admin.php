@@ -147,6 +147,21 @@ class CVS_Admin {
             return;
         }
 
+        // On the Form Preview tab, load the public CSS first so cvs-admin.css
+        // can scope its admin-context overrides (.cvs-form-preview-wrap …) on top.
+        // The preview HTML uses front-end class names so this gives us a faithful
+        // "how visitors see it" rendering with no duplicated styles.
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- read-only tab switch.
+        $current_tab = isset( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : '';
+        if ( 'form_preview' === $current_tab ) {
+            wp_enqueue_style(
+                'cvs-public',
+                CVS_PLUGIN_URL . 'public/css/cvs-public.css',
+                array(),
+                CVS_VERSION
+            );
+        }
+
         wp_enqueue_style(
             'cvs-admin',
             CVS_PLUGIN_URL . 'admin/css/cvs-admin.css',
