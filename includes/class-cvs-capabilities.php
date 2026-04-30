@@ -2,19 +2,22 @@
 /**
  * Custom capabilities for the Campus Visit Scheduler.
  *
- * Splits "day-to-day staff actions" from "agency/admin configuration":
+ * Splits "day-to-day staff actions" from "agency form configuration":
  *
  *   cvs_view_bookings   — read-only access to bookings list, calendar, reports
  *   cvs_manage_bookings — write access to a booking (cancel, confirm, edit notes)
- *   cvs_manage_settings — full settings access (general, form builder, schedule,
- *                         blackout dates, holidays, notifications, email templates)
+ *   cvs_manage_settings — operational settings (Admin + Editor): General,
+ *                         Tour Schedule, Blackout Dates, Holiday Periods,
+ *                         Notifications, Email Templates
+ *   cvs_manage_form     — agency-only form structure: Form Builder + Form Preview
  *
  * Granted on plugin activation:
- *   administrator → all three caps
- *   editor        → cvs_view_bookings + cvs_manage_bookings (no settings)
+ *   administrator → all four caps
+ *   editor        → cvs_view_bookings + cvs_manage_bookings + cvs_manage_settings
  *
- * That mapping lets school office staff manage the booking pipeline with an
- * Editor account while keeping the configuration tabs as the agency zone.
+ * That lets school office staff run the day-to-day operation (bookings, schedule,
+ * holiday calendar, who gets notified, email wording) while the form structure
+ * — what fields exist, what sections they live in — stays in the agency zone.
  *
  * @package CampusVisitScheduler
  */
@@ -28,6 +31,7 @@ class CVS_Capabilities {
     const VIEW_BOOKINGS   = 'cvs_view_bookings';
     const MANAGE_BOOKINGS = 'cvs_manage_bookings';
     const MANAGE_SETTINGS = 'cvs_manage_settings';
+    const MANAGE_FORM     = 'cvs_manage_form';
 
     /**
      * All capabilities introduced by this plugin.
@@ -35,7 +39,12 @@ class CVS_Capabilities {
      * @return string[]
      */
     public static function all() {
-        return array( self::VIEW_BOOKINGS, self::MANAGE_BOOKINGS, self::MANAGE_SETTINGS );
+        return array(
+            self::VIEW_BOOKINGS,
+            self::MANAGE_BOOKINGS,
+            self::MANAGE_SETTINGS,
+            self::MANAGE_FORM,
+        );
     }
 
     /**
@@ -45,9 +54,38 @@ class CVS_Capabilities {
      */
     public static function default_role_grants() {
         return array(
-            'administrator' => array( self::VIEW_BOOKINGS, self::MANAGE_BOOKINGS, self::MANAGE_SETTINGS ),
-            'editor'        => array( self::VIEW_BOOKINGS, self::MANAGE_BOOKINGS ),
+            'administrator' => array(
+                self::VIEW_BOOKINGS,
+                self::MANAGE_BOOKINGS,
+                self::MANAGE_SETTINGS,
+                self::MANAGE_FORM,
+            ),
+            'editor'        => array(
+                self::VIEW_BOOKINGS,
+                self::MANAGE_BOOKINGS,
+                self::MANAGE_SETTINGS,
+            ),
         );
+    }
+
+    /**
+     * Tabs the current user is allowed to see/edit in the Settings page.
+     * Used by settings-page.php to filter the visible tab list and reject
+     * direct ?tab= URL access.
+     *
+     * @return string[] Tab IDs (matching the keys in $tabs in settings-page.php).
+     */
+    public static function visible_settings_tabs() {
+        $tabs = array();
+        if ( current_user_can( self::MANAGE_SETTINGS ) ) {
+            // Operational tabs available to Editors and Admins.
+            $tabs = array( 'general', 'tour_schedule', 'blackout', 'holidays', 'notifications', 'emails' );
+        }
+        if ( current_user_can( self::MANAGE_FORM ) ) {
+            // Form Builder + Form Preview slot in BEFORE the operational tabs.
+            $tabs = array_merge( array( 'form_fields', 'form_preview' ), $tabs );
+        }
+        return $tabs;
     }
 
     /**

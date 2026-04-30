@@ -10,9 +10,10 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-// Get current tab
-$current_tab = isset( $_GET['tab'] ) ? sanitize_text_field( $_GET['tab'] ) : 'general';
-$tabs = array(
+// Tab catalogue. The visible subset for the current user is filtered below
+// based on capabilities — Editors with cvs_manage_dates only see Blackout
+// Dates and Holiday Periods; Admins with cvs_manage_settings see everything.
+$all_tabs = array(
     'general'       => __( 'General', 'campus-visit-scheduler' ),
     'form_fields'   => __( 'Form Builder', 'campus-visit-scheduler' ),
     'form_preview'  => __( 'Form Preview', 'campus-visit-scheduler' ),
@@ -22,6 +23,18 @@ $tabs = array(
     'notifications' => __( 'Notifications', 'campus-visit-scheduler' ),
     'emails'        => __( 'Email Templates', 'campus-visit-scheduler' ),
 );
+$visible_tab_ids = CVS_Capabilities::visible_settings_tabs();
+$tabs            = array_intersect_key( $all_tabs, array_flip( $visible_tab_ids ) );
+
+// Determine current tab. If the requested tab isn't in the visible set
+// (e.g. an Editor following a deep-link to ?tab=general), fall back to
+// the first allowed tab so they land somewhere they can actually use.
+$requested_tab = isset( $_GET['tab'] ) ? sanitize_text_field( $_GET['tab'] ) : '';
+if ( '' !== $requested_tab && isset( $tabs[ $requested_tab ] ) ) {
+    $current_tab = $requested_tab;
+} else {
+    $current_tab = ! empty( $visible_tab_ids ) ? reset( $visible_tab_ids ) : 'general';
+}
 
 // Friendly per-tab intro copy. Title + body + optional tip.
 $tab_intros = array(
