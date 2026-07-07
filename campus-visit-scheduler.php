@@ -3,7 +3,7 @@
  * Plugin Name: Campus Visit Scheduler
  * Plugin URI: https://kalluriit.com.au/plugins/campus-visit-scheduler
  * Description: A comprehensive school tour booking system for managing parent visits and campus tours. Built and maintained by KalluriIT.
- * Version: 1.3.2
+ * Version: 1.3.3
  * Author: KalluriIT
  * Author URI: https://kalluriit.com.au
  * License: GPL v2 or later
@@ -20,7 +20,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin version
-define( 'CVS_VERSION', '1.3.2' );
+define( 'CVS_VERSION', '1.3.3' );
 
 // Plugin directory path
 define( 'CVS_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );

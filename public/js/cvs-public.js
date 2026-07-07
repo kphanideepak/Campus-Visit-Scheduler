@@ -11,6 +11,29 @@
         init: function() {
             this.bindEvents();
             this.updateTotalGroup();
+            // Replace the (possibly cache-stale) nonce baked into the page with a
+            // fresh one fetched from an uncached endpoint. Prevents 403s when the
+            // booking page is served from a full-page cache.
+            this.refreshNonce();
+        },
+
+        // Fetch a fresh nonce and store it on cvs_public.nonce. Runs the optional
+        // callback whether the fetch succeeds or fails (fall back to current nonce).
+        refreshNonce: function(callback) {
+            $.ajax({
+                url: cvs_public.ajax_url,
+                type: 'POST',
+                data: { action: 'cvs_get_nonce' },
+                success: function(response) {
+                    if (response && response.success && response.data && response.data.nonce) {
+                        cvs_public.nonce = response.data.nonce;
+                    }
+                    if (typeof callback === 'function') { callback(); }
+                },
+                error: function() {
+                    if (typeof callback === 'function') { callback(); }
+                }
+            });
         },
 
         bindEvents: function() {
@@ -128,10 +151,9 @@
             // Disable submit button
             $submit.prop('disabled', true).text(cvs_public.strings.loading);
 
-            // Build form data
+            // Build form data (nonce is added at post time, after a fresh fetch)
             var formData = {
                 action: 'cvs_submit_booking',
-                nonce: cvs_public.nonce,
                 tour_date: $('#cvs-tour-date').val(),
                 tour_time: $('#cvs-tour-time').val(),
                 parent_name: $('#cvs-parent-name').val(),
@@ -163,22 +185,29 @@
                 }
             });
 
-            $.ajax({
-                url: cvs_public.ajax_url,
-                type: 'POST',
-                data: formData,
-                success: function(response) {
-                    if (response.success) {
-                        CVS.showConfirmation(response.data);
-                    } else {
-                        CVS.showErrors([response.data || cvs_public.strings.error]);
+            // Fetch a fresh nonce, then submit — so a cache-stale page nonce can't
+            // 403 the booking. refreshNonce always runs its callback (even on
+            // failure), falling back to whatever nonce we currently hold.
+            this.refreshNonce(function() {
+                formData.nonce = cvs_public.nonce;
+
+                $.ajax({
+                    url: cvs_public.ajax_url,
+                    type: 'POST',
+                    data: formData,
+                    success: function(response) {
+                        if (response.success) {
+                            CVS.showConfirmation(response.data);
+                        } else {
+                            CVS.showErrors([response.data || cvs_public.strings.error]);
+                            $submit.prop('disabled', false).text('Book Tour');
+                        }
+                    },
+                    error: function() {
+                        CVS.showErrors([cvs_public.strings.error]);
                         $submit.prop('disabled', false).text('Book Tour');
                     }
-                },
-                error: function() {
-                    CVS.showErrors([cvs_public.strings.error]);
-                    $submit.prop('disabled', false).text('Book Tour');
-                }
+                });
             });
         },
 

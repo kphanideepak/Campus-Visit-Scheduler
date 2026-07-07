@@ -34,6 +34,11 @@ class CVS_Public {
         add_action( 'wp_ajax_nopriv_cvs_submit_booking', array( $this, 'ajax_submit_booking' ) );
         add_action( 'wp_ajax_cvs_download_ics', array( $this, 'ajax_download_ics' ) );
         add_action( 'wp_ajax_nopriv_cvs_download_ics', array( $this, 'ajax_download_ics' ) );
+
+        // Fresh-nonce endpoint — lets the form fetch a valid nonce at runtime so
+        // it never depends on the (cacheable, expirable) nonce baked into the page.
+        add_action( 'wp_ajax_cvs_get_nonce', array( $this, 'ajax_get_nonce' ) );
+        add_action( 'wp_ajax_nopriv_cvs_get_nonce', array( $this, 'ajax_get_nonce' ) );
     }
 
     /**
@@ -162,6 +167,20 @@ class CVS_Public {
         }
 
         wp_send_json_success( $slots );
+    }
+
+    /**
+     * AJAX: Issue a fresh public nonce.
+     *
+     * The booking form's nonce is localized into the page HTML, which full-page
+     * caching can serve stale (expired) to logged-out visitors — causing a 403
+     * on booking submission. The form calls this uncached endpoint to obtain a
+     * valid nonce right before submitting, so it never relies on the cached
+     * page's nonce. Issuing a nonce to an anonymous visitor is not privileged,
+     * so no nonce is required to call this.
+     */
+    public function ajax_get_nonce() {
+        wp_send_json_success( array( 'nonce' => wp_create_nonce( 'cvs_public_nonce' ) ) );
     }
 
     /**
