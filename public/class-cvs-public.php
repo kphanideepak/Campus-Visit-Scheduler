@@ -127,7 +127,12 @@ class CVS_Public {
      * AJAX: Get available time slots for a date
      */
     public function ajax_get_available_slots() {
-        check_ajax_referer( 'cvs_public_nonce', 'nonce' );
+        // No nonce check on purpose. This is a read-only, public availability
+        // lookup (no writes, no private data), so it carries no CSRF risk. A
+        // nonce here only makes the endpoint fragile behind full-page caching:
+        // a cached copy of the booking page serves logged-out visitors a stale
+        // (expired) nonce, which check_ajax_referer rejects with a 403 on
+        // admin-ajax.php. The write endpoint (cvs_submit_booking) keeps its nonce.
 
         $date = isset( $_POST['date'] ) ? sanitize_text_field( $_POST['date'] ) : '';
 
